@@ -25,4 +25,8 @@
     <url type="translate">https://github.com/tymmesyde/Losange/locales</url>
 
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
+
+    <releases>
+        <release version="0.1.0" date="2025-01-24" />
+    </releases>
 </component>
