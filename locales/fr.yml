@@ -1,0 +1,88 @@
+menu_login: _Connexion
+menu_logout: _Déconnexion
+menu_about: _À propos de %{name}
+menu_preferences: _Préférences
+
+preferences: Préférences
+appereance: Apparence
+catalog_addon_icon: Afficher l'icône de l'addon du catalogue
+catalog_addon_name: Afficher le nom de l'addon du catalogue
+content_title_below: Afficher les titres du contenu en dessous
+details_content_colors: Afficher les couleurs d'arrière-plan du contenu pour les détails
+details_content_logo: Afficher le logo du contenu pour les détails
+storage: Stockage
+location: Emplacement
+server: Serveur
+url: Url
+autostart: Démarrer dès le lancement
+online: En ligne
+offline: Hors ligne
+
+login: Connexion
+email: Email
+password: Mot de passe
+continue: Continuer
+incorrect_credentials: E-mail ou mot de passe incorrect
+
+home: Acceuil
+discover: Découvrir
+library: Bibliothèque
+
+library_empty_title: Bibliothèque vide
+library_empty_description: Parcourez les contenus et ajoutez-les à votre bibliothèque
+library_empty_button: Aller à l'Accueil
+
+search: Recherche
+search_status_title: Rechercher
+search_status_description: Vous pouvez rechercher des titres, des genres et des acteurs
+
+no_streams: Aucun streams
+no_streams_description: Vos addons n'ont pas donné de résultats
+
+install_more_addons: Installer d'autres addons
+
+add_to_library: Ajouter à la Bibliothèque
+remove_from_library: Retirer de la Bibliothèque
+
+genres: Genres
+directors: Réalisateurs
+writers: Scénaristes
+actors: Acteurs
+
+addons: Addons
+
+installed_addons: Installés
+official_addons: Officiels
+community_addons: Communauté
+
+official: Officiel
+install: Installer
+uninstall: Désinstaller
+configure: Configurer
+
+default: Défaut
+alternative: Alternative
+
+continue_watching: Continuer de regarder
+
+season: Saison %{n}
+special_season: Spécial
+
+all: Tous
+movie: Films
+series: Séries
+channel: Chaines
+tv: TV
+radio: Radio
+anime: Animés
+other: Autre
+
+lastwatched: Dernier regardé
+name: A-Z
+namereverse: Z-A
+timeswatched: Nombre de visionnages
+watched: Regardé
+notwatched: Non regardé
+
+original: Original
+error_player: Impossible de lire la vidéo

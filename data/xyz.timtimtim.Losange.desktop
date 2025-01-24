@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Losange
+Comment="A simple Stremio client"
+Type=Application
+Exec=sh -c "/usr/bin/losange -o '%u'"
+MimeType=x-scheme-handler/stremio;
+Terminal=false
+Categories=Utility;
+Keywords=Streaming;Stremio;Movies;Series;
+Icon=xyz.timtimtim.Losange
+StartupNotify=true

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>xyz.timtimtim.Losange</id>
+    <name>Losange</name>
+    <summary>A simple Stremio client</summary>
+    <description>
+        <p>Unofficial Stremio client</p>
+    </description>
+    <developer_name>Tim Dusser-Jolly</developer_name>
+
+    <metadata_license>MIT</metadata_license>
+    <project_license>GPL-3.0-only</project_license>
+
+    <screenshots>
+        <screenshot type="default">
+            <image>
+                https://github.com/tymmesyde/Losange/data/resources/screenshots/screenshot1.png
+            </image>
+            <caption>Home page</caption>
+        </screenshot>
+    </screenshots>
+
+    <url type="homepage">https://github.com/tymmesyde/Losange</url>
+    <url type="bugtracker">https://github.com/tymmesyde/Losange/issues</url>
+    <url type="translate">https://github.com/tymmesyde/Losange/locales</url>
+
+    <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
+</component>

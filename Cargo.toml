@@ -1,0 +1,62 @@
+[package]
+name = "losange"
+version = "0.0.0"
+description = "A simple Stremio client"
+authors = ["Tim Dusser-Jolly"]
+repository = "https://github.com/tymmesyde/Losange"
+license = "GPL-3.0-only"
+license-file = "LICENSE.md"
+edition = "2021"
+publish = false
+
+[workspace]
+members = [
+    "stremio-core-losange"
+]
+
+[dependencies]
+anyhow = "1.0.94"
+chrono = "0.4.39"
+clap = { version = "4.5.23", features = ["derive"] }
+color-thief = "0.2.2"
+gst = { version = "0.23.4", package = "gstreamer", features = ["v1_24"] }
+gstgtk4 = { version = "0.13.4", package = "gst-plugin-gtk4", features = ["gtk_v4_16", "x11egl", "x11glx", "wayland"] }
+hsl = "0.1.1"
+http-cache-reqwest = "0.14.0"
+itertools = "0.13.0"
+open = "5.3.1"
+relm4 = { version = "0.9.1", features = ["libadwaita", "gnome_47"] }
+relm4-components = { version = "0.9.1", features = ["libadwaita"] }
+relm4-icons = "0.9.0"
+reqwest = { version = "0.12.5", features = ["rustls-tls", "http2", "json"] }
+reqwest-middleware = "0.3.3"
+rust-i18n = "3.1.2"
+rust_iso639 = "0.0.3"
+serde = { version = "1.0.217", features = ["derive"] }
+stremio-core-losange = { version = "0.1.0", path = "./stremio-core-losange" }
+tokio = { version = "1.42.0", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+url = "2.5.4"
+xml = "0.8.20"
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/losange", dest = "/usr/bin/", mode = "755" },
+    { source = "data/icons/xyz.timtimtim.Losange.svg", dest = "/usr/share/icons/hicolor/scalable/apps/", mode = "644" },
+    { source = "data/xyz.timtimtim.Losange.desktop", dest = "/usr/share/applications/", mode = "644" },
+    { source = "data/xyz.timtimtim.Losange.metainfo.xml", dest = "/usr/share/metainfo/", mode = "644" },
+    { source = "data/xyz.timtimtim.Losange.gschema.xml", dest = "/usr/share/glib-2.0/schemas/", mode = "644" },
+]
+
+[package.metadata.generate-rpm.requires]
+nodejs = ">= 10"
+
+[package.metadata.deb]
+assets = [
+    ["target/release/losange", "/usr/bin/losange", "755"],
+    ["data/icons/xyz.timtimtim.Losange.svg", "/usr/share/icons/hicolor/scalable/apps/", "644"],
+    ["data/xyz.timtimtim.Losange.desktop", "/usr/share/applications/", "644"],
+    ["data/xyz.timtimtim.Losange.metainfo.xml", "/usr/share/metainfo/", "644"],
+    ["data/xyz.timtimtim.Losange.gschema.xml", "/usr/share/glib-2.0/schemas/", "644"],
+]

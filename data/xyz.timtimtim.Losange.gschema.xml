@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema id="xyz.timtimtim.Losange" path="/xyz/timtimtim/losange/">
+        <key name="is-maximized" type="b">
+            <default>false</default>
+            <summary>Maximized state of the window</summary>
+        </key>
+        <key name="catalog-addon-icon" type="b">
+            <default>true</default>
+            <summary>Display catalog addon icon</summary>
+        </key>
+        <key name="catalog-addon-name" type="b">
+            <default>false</default>
+            <summary>Display catalog addon name</summary>
+        </key>
+        <key name="content-title-below" type="b">
+            <default>false</default>
+            <summary>Display content title below</summary>
+        </key>
+        <key name="details-content-colors" type="b">
+            <default>true</default>
+            <summary>Display background colors for details</summary>
+        </key>
+        <key name="details-content-logo" type="b">
+            <default>false</default>
+            <summary>Display content logo for details</summary>
+        </key>
+        <key name="storage-location" type="s">
+            <default>"/tmp/losange"</default>
+            <summary>Location of the storage</summary>
+        </key>
+        <key name="autostart-server" type="b">
+            <default>true</default>
+            <summary>Automatically start server</summary>
+        </key>
+    </schema>
+</schemalist>

@@ -1,0 +1,88 @@
+listview.boxed-list {
+    border-radius: 12px;
+    background-color: @card_bg_color;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03),
+        0 1px 3px 1px rgba(0, 0, 0, 0.07),
+        0 2px 6px 2px rgba(0, 0, 0, 0.03);
+}
+
+listview.boxed-list > row {
+    border-bottom: 1px solid @card_shade_color;
+    transition: background-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+dropdown.flat > button {
+    background-color: transparent;
+}
+
+dropdown.flat > button:hover {
+    background-color: color-mix(in srgb, currentColor 7%, transparent);
+}
+
+dropdown.flat > button:active {
+    background-color: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.small-icon {
+    border-radius: 6px;
+}
+
+.medium-icon {
+    border-radius: 12px;
+}
+
+.large-icon {
+    border-radius: 24px;
+}
+
+.medium-tag {
+    font-size: 13px;
+    min-height: 20px;
+    border-radius: 20px;
+}
+
+.small-tag {
+    font-size: 11px;
+    min-height: 15px;
+    border-radius: 15px;
+    padding: 4px 12px;
+}
+
+.new-videos {
+    min-height: 32px;
+    min-width: 32px;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 100%;
+    background-color: @accent_bg_color;
+}
+
+.catalog-button {
+    border-radius: 100%;
+    color: @window_fg_color;
+    background-color: color-mix(in srgb, @window_bg_color 85%, @window_fg_color);
+}
+
+.catalog-button:hover {
+    background-image: image(color-mix(in srgb, currentColor 10%, transparent));
+}
+
+.catalog-button:active {
+    background-image: image(RGB(0 0 6 / 20%));
+}
+
+.sidebar-pane {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-right: none;
+}
+
+.toolbar {
+    border-right: none;
+}
+
+.colors {
+    background: linear-gradient(125deg, @background_color_0 0%, @window_bg_color 100%);
+    transition-property: background;
+    transition-duration: 250ms;
+    transition-timing-function: ease;
+}

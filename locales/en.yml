@@ -1,0 +1,88 @@
+menu_login: _Login
+menu_logout: _Logout
+menu_about: _About %{name}
+menu_preferences: _Preferences
+
+preferences: Preferences
+appereance: Appearance
+catalog_addon_icon: Display catalog addon icon
+catalog_addon_name: Display catalog addon name
+content_title_below: Display content title below
+details_content_colors: Display content background colors for details
+details_content_logo: Display content logo for details
+storage: Storage
+location: Location
+server: Server
+url: Url
+autostart: Start at launch
+online: Online
+offline: Offline
+
+login: Login
+email: Email
+password: Password
+continue: Continue
+incorrect_credentials: Incorrect email or password
+
+home: Home
+discover: Discover
+library: Library
+
+library_empty_title: Libary empty
+library_empty_description: Browse content and add it to your library
+library_empty_button: Go to Home
+
+search: Search
+search_status_title: Search anything
+search_status_description: You can search for titles, genres and actors
+
+no_streams: No streams
+no_streams_description: Your addons did not return any content
+
+install_more_addons: Install more addons
+
+add_to_library: Add to Library
+remove_from_library: Remove from Library
+
+genres: Genres
+directors: Directors
+writers: Writers
+actors: Actors
+
+addons: Addons
+
+installed_addons: Installed
+official_addons: Official
+community_addons: Community
+
+official: Official
+install: Install
+uninstall: Uninstall
+configure: Configure
+
+default: Default
+alternative: Alternative
+
+continue_watching: Continue watching
+
+season: Season %{n}
+special_season: Special
+
+all: All
+movie: Movies
+series: Series
+channel: Channels
+tv: TV
+radio: Radio
+anime: Animes
+other: Other
+
+lastwatched: Last watched
+name: A-Z
+namereverse: Z-A
+timeswatched: Times watched
+watched: Watched
+notwatched: Not watched
+
+original: Original
+error_player: Unable to play video
