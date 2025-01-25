@@ -12,7 +12,7 @@ use relm4::{
     AsyncComponentSender, Component, ComponentController, Controller, RelmWidgetExt,
 };
 use rust_i18n::t;
-use sidebar::Sidebar;
+use sidebar::{Sidebar, SidebarInput};
 use stremio_core_losange::models::{self, meta_details::META_DETAILS_STATE};
 use tag::{Tag, TagOutput};
 use tags::Tags;
@@ -319,6 +319,7 @@ impl AsyncComponent for DetailsPage {
     ) {
         match msg {
             DetailsPageInput::Load((id, r#type)) => {
+                self.sidebar.emit(SidebarInput::Reset);
                 models::meta_details::load(&r#type, &id, None);
             }
             DetailsPageInput::Unload => {
