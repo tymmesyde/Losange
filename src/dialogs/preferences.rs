@@ -39,7 +39,7 @@ impl Component for PreferencesDialog {
                 set_title: &t!("appereance"),
                 set_icon_name: Some("preferences-desktop-appearance-symbolic"),
                 set_margin_bottom: 26,
-                
+
                 add = &adw::PreferencesGroup {
                     set_title: &t!("general"),
 
