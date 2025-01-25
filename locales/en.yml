@@ -4,19 +4,26 @@ menu_about: _About %{name}
 menu_preferences: _Preferences
 
 preferences: Preferences
+
 appereance: Appearance
-catalog_addon_icon: Display catalog addon icon
-catalog_addon_name: Display catalog addon name
+general: General
 content_title_below: Display content title below
-details_content_colors: Display content background colors for details
-details_content_logo: Display content logo for details
-storage: Storage
-location: Location
+catalog: Catalog
+catalog_addon_icon: Display addon icon
+catalog_addon_name: Display addon name
+details: Details
+details_content_colors: Display content background colors
+details_content_logo: Display content logo
+
 server: Server
 url: Url
 autostart: Start at launch
+status: Status
 online: Online
 offline: Offline
+
+storage: Storage
+location: Location
 
 login: Login
 email: Email

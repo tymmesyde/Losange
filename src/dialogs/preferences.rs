@@ -36,10 +36,25 @@ impl Component for PreferencesDialog {
             set_title: &t!("preferences"),
 
             add = &adw::PreferencesPage {
+                set_title: &t!("appereance"),
+                set_icon_name: Some("preferences-desktop-appearance-symbolic"),
                 set_margin_bottom: 26,
+                
+                add = &adw::PreferencesGroup {
+                    set_title: &t!("general"),
+
+                    adw::SwitchRow {
+                        set_title: &t!("content_title_below"),
+                        set_active: model.settings.boolean("content-title-below"),
+                        connect_active_notify[sender] => move |row| {
+                            let value = row.is_active();
+                            sender.input(PreferencesDialogInput::ContentTitlesBelowChanged(value));
+                        }
+                    },
+                },
 
                 add = &adw::PreferencesGroup {
-                    set_title: &t!("appereance"),
+                    set_title: &t!("catalog"),
 
                     adw::SwitchRow {
                         set_title: &t!("catalog_addon_icon"),
@@ -57,14 +72,11 @@ impl Component for PreferencesDialog {
                             sender.input(PreferencesDialogInput::CatalogsAddonNameChanged(value));
                         }
                     },
-                    adw::SwitchRow {
-                        set_title: &t!("content_title_below"),
-                        set_active: model.settings.boolean("content-title-below"),
-                        connect_active_notify[sender] => move |row| {
-                            let value = row.is_active();
-                            sender.input(PreferencesDialogInput::ContentTitlesBelowChanged(value));
-                        }
-                    },
+                },
+
+                add = &adw::PreferencesGroup {
+                    set_title: &t!("details"),
+
                     adw::SwitchRow {
                         set_title: &t!("details_content_colors"),
                         set_active: model.settings.boolean("details-content-colors"),
@@ -81,19 +93,26 @@ impl Component for PreferencesDialog {
                             sender.input(PreferencesDialogInput::DetailsContentLogoChanged(value));
                         }
                     },
-                },
+                }
+            },
+
+            add = &adw::PreferencesPage {
+                set_title: &t!("server"),
+                set_icon_name: Some("network-server-symbolic"),
+                set_margin_bottom: 26,
 
                 add = &adw::PreferencesGroup {
-                    set_title: &t!("server"),
+                    adw::ActionRow {
+                        set_title: &t!("status"),
+                        add_suffix = &gtk::Label {
 
-                    #[wrap(Some)]
-                    set_header_suffix = &gtk::Label {
-                        #[watch]
-                        set_label: &if server.online {
-                            t!("online")
-                        } else {
-                            t!("offline")
-                        },
+                            #[watch]
+                            set_label: &if server.online {
+                                t!("online")
+                            } else {
+                                t!("offline")
+                            }
+                        }
                     },
 
                     adw::EntryRow {
@@ -113,10 +132,14 @@ impl Component for PreferencesDialog {
                         },
                     }
                 },
+            },
+
+            add = &adw::PreferencesPage {
+                set_title: &t!("storage"),
+                set_icon_name: Some("drive-harddisk-symbolic"),
+                set_margin_bottom: 26,
 
                 add = &adw::PreferencesGroup {
-                    set_title: &t!("storage"),
-
                     adw::EntryRow {
                         set_title: &t!("location"),
                         set_text: &model.settings.string("storage-location"),

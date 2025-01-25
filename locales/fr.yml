@@ -4,19 +4,26 @@ menu_about: _À propos de %{name}
 menu_preferences: _Préférences
 
 preferences: Préférences
+
 appereance: Apparence
-catalog_addon_icon: Afficher l'icône de l'addon du catalogue
-catalog_addon_name: Afficher le nom de l'addon du catalogue
+general: Général
 content_title_below: Afficher les titres du contenu en dessous
-details_content_colors: Afficher les couleurs d'arrière-plan du contenu pour les détails
-details_content_logo: Afficher le logo du contenu pour les détails
-storage: Stockage
-location: Emplacement
+catalog: Catalogue
+catalog_addon_icon: Afficher l'icône de l'addon
+catalog_addon_name: Afficher le nom de l'addon
+details: Détails
+details_content_colors: Afficher les couleurs d'arrière-plan du contenu
+details_content_logo: Afficher le logo du contenu
+
 server: Serveur
 url: Url
 autostart: Démarrer dès le lancement
+status: Statut
 online: En ligne
 offline: Hors ligne
+
+storage: Stockage
+location: Emplacement
 
 login: Connexion
 email: Email
