@@ -27,6 +27,7 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.1.1" date="2025-01-25" />
         <release version="0.1.0" date="2025-01-24" />
     </releases>
 </component>
