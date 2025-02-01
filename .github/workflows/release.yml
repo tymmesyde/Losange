@@ -43,7 +43,7 @@ jobs:
       - name: Build rpm package
         run: cargo generate-rpm
       - name: Build flatpak package
-        run: ./flatpak/build.sh
+        run: ./build-aux/flatpak/build.sh
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:

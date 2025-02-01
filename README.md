@@ -70,6 +70,6 @@ cargo deb
 
 #### Flatpak
 ```bash
-./flatpak/build.sh
-#> flatpak/*.flatpak
+./build-aux/flatpak/build.sh
+#> build-aux/flatpak/*.flatpak
 ```
