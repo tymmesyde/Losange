@@ -36,6 +36,23 @@
             "install -Dm644 ./data/xyz.timtimtim.Losange.gschema.xml -t /app/share/glib-2.0/schemas/",
             "glib-compile-schemas /app/share/glib-2.0/schemas"
         ],
+        "modules": [
+            {
+                "name": "nodejs",
+                "buildsystem": "simple",
+                "build-commands": [
+                    "install -D bin/node -t /app/bin/"
+                ],
+                "sources": [
+                    {
+                        "type": "archive",
+                        "url": "https://nodejs.org/dist/v22.13.1/node-v22.13.1-linux-x64.tar.xz",
+                        "path": "node-v22.13.1-linux-x64.tar.xz",
+                        "sha256": "0d2a5af33c7deab5555c8309cd3f373446fe1526c1b95833935ab3f019733b3b"
+                    }
+                ]
+            }
+        ],
         "sources": [
             {
                 "type": "dir",
