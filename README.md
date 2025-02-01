@@ -12,6 +12,16 @@ A simple [Stremio](https://stremio.com) client for [GNOME](https://www.gnome.org
 > [!NOTE]  
 > This is a work in progress, missing features and bugs to be expected.
 
+## Installation
+
+You can find all the package files in the [Releases](https://github.com/tymmesyde/Losange/releases) section of this repository
+
+### Fedora
+```bash
+dnf copr enable tymmesyde/Losange
+dnf install Losange
+```
+
 ## Development
 
 ```
