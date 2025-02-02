@@ -17,11 +17,11 @@
         "append-path": "/usr/lib/sdk/rust-stable/bin"
     },
     "modules": [{
-        "name": "service",
+        "name": "losange",
         "buildsystem": "simple",
         "build-options": {
             "env": {
-                "CARGO_HOME": "/run/build/service/cargo"
+                "CARGO_HOME": "/run/build/losange/cargo"
             }
         },
         "build-commands": [
