@@ -58,7 +58,7 @@
                 "type": "dir",
                 "path": "."
             },
-            "flatpak/cargo-sources.json"
+            "build-aux/flatpak/cargo-sources.json"
         ]
     }]
 }
