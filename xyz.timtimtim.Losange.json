@@ -16,49 +16,49 @@
     "build-options": {
         "append-path": "/usr/lib/sdk/rust-stable/bin"
     },
-    "modules": [{
-        "name": "losange",
-        "buildsystem": "simple",
-        "build-options": {
-            "env": {
-                "CARGO_HOME": "/run/build/losange/cargo"
-            }
-        },
-        "build-commands": [
-            "cargo --offline fetch --manifest-path Cargo.toml --verbose",
-            "cargo --offline build --release --verbose"
-        ],
-        "post-install": [
-            "install -Dm755 ./target/release/losange -t /app/bin/",
-            "install -Dm644 ./data/icons/xyz.timtimtim.Losange.svg -t /app/share/icons/hicolor/scalable/apps/",
-            "install -Dm644 ./build-aux/flatpak/xyz.timtimtim.Losange.desktop -t /app/share/applications/",
-            "install -Dm644 ./data/xyz.timtimtim.Losange.metainfo.xml -t /app/share/metainfo/",
-            "install -Dm644 ./data/xyz.timtimtim.Losange.gschema.xml -t /app/share/glib-2.0/schemas/",
-            "glib-compile-schemas /app/share/glib-2.0/schemas"
-        ],
-        "modules": [
-            {
-                "name": "nodejs",
-                "buildsystem": "simple",
-                "build-commands": [
-                    "install -D bin/node -t /app/bin/"
-                ],
-                "sources": [
-                    {
-                        "type": "archive",
-                        "url": "https://nodejs.org/dist/v22.13.1/node-v22.13.1-linux-x64.tar.xz",
-                        "path": "node-v22.13.1-linux-x64.tar.xz",
-                        "sha256": "0d2a5af33c7deab5555c8309cd3f373446fe1526c1b95833935ab3f019733b3b"
-                    }
-                ]
-            }
-        ],
-        "sources": [
-            {
-                "type": "dir",
-                "path": "."
+    "modules": [
+        {
+            "name": "losange",
+            "buildsystem": "simple",
+            "build-options": {
+                "env": {
+                    "CARGO_HOME": "/run/build/losange/cargo"
+                }
             },
-            "build-aux/flatpak/cargo-sources.json"
-        ]
-    }]
+            "build-commands": [
+                "cargo --offline fetch --manifest-path Cargo.toml --verbose",
+                "cargo --offline build --release --verbose"
+            ],
+            "post-install": [
+                "install -Dm755 ./target/release/losange -t /app/bin/",
+                "install -Dm644 ./data/icons/xyz.timtimtim.Losange.svg -t /app/share/icons/hicolor/scalable/apps/",
+                "install -Dm644 ./build-aux/flatpak/xyz.timtimtim.Losange.desktop -t /app/share/applications/",
+                "install -Dm644 ./data/xyz.timtimtim.Losange.metainfo.xml -t /app/share/metainfo/",
+                "install -Dm644 ./data/xyz.timtimtim.Losange.gschema.xml -t /app/share/glib-2.0/schemas/",
+                "glib-compile-schemas /app/share/glib-2.0/schemas"
+            ],
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "."
+                },
+                "build-aux/flatpak/cargo-sources.json"
+            ]
+        },
+        {
+            "name": "nodejs",
+            "buildsystem": "simple",
+            "build-commands": [
+                "install -D bin/node -t /app/bin/"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://nodejs.org/dist/v22.13.1/node-v22.13.1-linux-x64.tar.xz",
+                    "path": "node-v22.13.1-linux-x64.tar.xz",
+                    "sha256": "0d2a5af33c7deab5555c8309cd3f373446fe1526c1b95833935ab3f019733b3b"
+                }
+            ]
+        }
+    ]
 }
