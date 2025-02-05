@@ -41,16 +41,16 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 
 %changelog
 * Sun Feb 2 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.1.1-5
-- Add node to Requires
+- Minor change to the package file
 
 * Sat Feb 1 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.1.1-4
-- Use SPDX expression for License
+- Minor change to the package file
 
 * Sat Feb 1 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.1.1-3
-- Add changelog and update description
+- Minor change to the package file
 
 * Sat Feb 1 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.1.1-2
-- Fix incorrect install and files paths
+- Fix package file
 
 * Sat Feb 1 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.1.1-1
 - Initial package
