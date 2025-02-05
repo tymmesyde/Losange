@@ -53,6 +53,7 @@ pub struct Player {
     video: Controller<Video>,
     immersed: bool,
     fullscreen: bool,
+    start_time: bool,
     mouse_position: (f64, f64),
     immersed_timeout: Option<JoinHandle<()>>,
     hovering_controls: bool,
@@ -304,6 +305,7 @@ impl SimpleComponent for Player {
             video,
             immersed: false,
             fullscreen: false,
+            start_time: false,
             mouse_position: (0.0, 0.0),
             immersed_timeout: None,
             hovering_controls: false,
@@ -331,6 +333,7 @@ impl SimpleComponent for Player {
             PlayerInput::Unload => {
                 models::player::unload();
                 self.video.emit(VideoInput::Unload);
+                self.start_time = false;
             }
             PlayerInput::UpdateVideo => {
                 let ctx = CTX_STATE.read_inner();
@@ -343,7 +346,8 @@ impl SimpleComponent for Player {
                     }
                 }
 
-                if video.loaded && video.time != player.time {
+                if video.loaded && !video.paused && !self.start_time {
+                    self.start_time = true;
                     self.video.emit(VideoInput::Seek(player.time));
                 }
 
