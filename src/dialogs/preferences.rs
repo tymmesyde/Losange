@@ -4,6 +4,7 @@ use gtk::gio;
 use relm4::{adw, gtk, Component, ComponentParts, ComponentSender};
 use rust_i18n::t;
 use stremio_core_losange::models::{self, ctx::CTX_STATE, server::SERVER_STATE};
+use url::Url;
 
 #[derive(Debug)]
 pub enum PreferencesDialogInput {
@@ -231,10 +232,18 @@ impl Component for PreferencesDialog {
                 let _ = self.settings.set_boolean("details-content-logo", value);
             }
             PreferencesDialogInput::PlayerSubtitlesSizeChanged(value) => {
-                models::ctx::update_subtitles_size(value);
+                models::ctx::update_settings(|mut settings| {
+                    settings.subtitles_size = value as u8;
+                    settings
+                });
             }
             PreferencesDialogInput::ServerUrlChanged(value) => {
-                models::ctx::update_server_url(value);
+                if let Ok(url) = Url::parse(&value) {
+                    models::ctx::update_settings(|mut settings| {
+                        settings.streaming_server_url = url;
+                        settings
+                    });
+                }
             }
             PreferencesDialogInput::ServerEnabledChanged(value) => {
                 let _ = self.settings.set_boolean("autostart-server", value);

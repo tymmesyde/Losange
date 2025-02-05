@@ -7,7 +7,6 @@ use stremio_core::{
         profile::{Auth, Settings},
     },
 };
-use url::Url;
 
 use crate::{core::dispatch, model::LosangeModelField};
 
@@ -63,24 +62,13 @@ pub fn logout() {
     dispatch(Action::Ctx(ActionCtx::Logout), Some(LosangeModelField::Ctx));
 }
 
-pub fn update_subtitles_size(size: f64) {
+pub fn update_settings<T: FnOnce(Settings) -> Settings>(update: T) {
     let state = CTX_STATE.read_inner();
-    let mut settings = state.settings.to_owned();
-    settings.subtitles_size = size as u8;
+    let settings = state.settings.to_owned();
+    let updated_settings = update(settings);
 
     dispatch(
-        Action::Ctx(ActionCtx::UpdateSettings(settings)),
-        Some(LosangeModelField::Ctx),
-    );
-}
-
-pub fn update_server_url(url: String) {
-    let state = CTX_STATE.read_inner();
-    let mut settings = state.settings.to_owned();
-    settings.streaming_server_url = Url::parse(&url).expect("Failed to parse server url");
-
-    dispatch(
-        Action::Ctx(ActionCtx::UpdateSettings(settings)),
+        Action::Ctx(ActionCtx::UpdateSettings(updated_settings)),
         Some(LosangeModelField::Ctx),
     );
 }
