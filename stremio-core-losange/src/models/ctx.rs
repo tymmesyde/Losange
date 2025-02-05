@@ -63,6 +63,17 @@ pub fn logout() {
     dispatch(Action::Ctx(ActionCtx::Logout), Some(LosangeModelField::Ctx));
 }
 
+pub fn update_subtitles_size(size: f64) {
+    let state = CTX_STATE.read_inner();
+    let mut settings = state.settings.to_owned();
+    settings.subtitles_size = size as u8;
+
+    dispatch(
+        Action::Ctx(ActionCtx::UpdateSettings(settings)),
+        Some(LosangeModelField::Ctx),
+    );
+}
+
 pub fn update_server_url(url: String) {
     let state = CTX_STATE.read_inner();
     let mut settings = state.settings.to_owned();

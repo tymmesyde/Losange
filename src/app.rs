@@ -46,6 +46,7 @@ pub enum AppMsg {
     OpenAddons,
     OpenAddon(Url),
     OpenStream(Box<Stream>),
+    OpenPreferences(Option<&'static str>),
     NavigateBack,
 }
 
@@ -253,7 +254,7 @@ impl AsyncComponent for App {
         let preferences_action = {
             let sender = model.preferences_dialog.sender().clone();
             RelmAction::<PreferencesAction>::new_stateless(move |_| {
-                sender.emit(PreferencesDialogInput::Open);
+                sender.emit(PreferencesDialogInput::Open(None));
             })
         };
 
@@ -316,6 +317,10 @@ impl AsyncComponent for App {
             AppMsg::OpenStream(stream) => {
                 self.player_page.emit(PlayerInput::Load(stream));
                 self.navigate("player");
+            }
+            AppMsg::OpenPreferences(name) => {
+                self.preferences_dialog
+                    .emit(PreferencesDialogInput::Open(name));
             }
             AppMsg::NavigateBack => {
                 self.navigation_view.pop();

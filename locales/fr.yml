@@ -15,6 +15,9 @@ details: Détails
 details_content_colors: Afficher les couleurs d'arrière-plan du contenu
 details_content_logo: Afficher le logo du contenu
 
+player: Lecteur
+subtitles_size: Taille des sous-titres
+
 server: Serveur
 url: Url
 autostart: Démarrer dès le lancement

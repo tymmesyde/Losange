@@ -1,20 +1,20 @@
+use crate::constants::{APP_ID, SUBTITLES_MAX_SIZE, SUBTITLES_MIN_SIZE};
 use adw::prelude::*;
 use gtk::gio;
 use relm4::{adw, gtk, Component, ComponentParts, ComponentSender};
 use rust_i18n::t;
 use stremio_core_losange::models::{self, ctx::CTX_STATE, server::SERVER_STATE};
 
-use crate::constants::APP_ID;
-
 #[derive(Debug)]
 pub enum PreferencesDialogInput {
-    Open,
+    Open(Option<&'static str>),
     Update,
     CatalogsIconChanged(bool),
     CatalogsAddonNameChanged(bool),
     ContentTitlesBelowChanged(bool),
     DetailsContentColorsChanged(bool),
     DetailsContentLogoChanged(bool),
+    PlayerSubtitlesSizeChanged(f64),
     ServerUrlChanged(String),
     ServerEnabledChanged(bool),
     StorageLocationChanged(String),
@@ -36,6 +36,7 @@ impl Component for PreferencesDialog {
             set_title: &t!("preferences"),
 
             add = &adw::PreferencesPage {
+                set_name: Some("appereance"),
                 set_title: &t!("appereance"),
                 set_icon_name: Some("preferences-desktop-appearance-symbolic"),
                 set_margin_bottom: 26,
@@ -97,6 +98,29 @@ impl Component for PreferencesDialog {
             },
 
             add = &adw::PreferencesPage {
+                set_name: Some("player"),
+                set_title: &t!("player"),
+                set_icon_name: Some("play"),
+                set_margin_bottom: 26,
+
+                add = &adw::PreferencesGroup {
+                    adw::SpinRow::with_range(SUBTITLES_MIN_SIZE as f64, SUBTITLES_MAX_SIZE as f64, 25.0) {
+                        set_title: &t!("subtitles_size"),
+
+                        #[watch]
+                        #[block_signal(subtitles_size_handler)]
+                        set_value: ctx.settings.subtitles_size.into(),
+
+                        connect_value_notify[sender] => move |row| {
+                            let value = row.value();
+                            sender.input(PreferencesDialogInput::PlayerSubtitlesSizeChanged(value));
+                        } @subtitles_size_handler,
+                    }
+                },
+            },
+
+            add = &adw::PreferencesPage {
+                set_name: Some("server"),
                 set_title: &t!("server"),
                 set_icon_name: Some("network-server-symbolic"),
                 set_margin_bottom: 26,
@@ -135,6 +159,7 @@ impl Component for PreferencesDialog {
             },
 
             add = &adw::PreferencesPage {
+                set_name: Some("storage"),
                 set_title: &t!("storage"),
                 set_icon_name: Some("drive-harddisk-symbolic"),
                 set_margin_bottom: 26,
@@ -161,6 +186,7 @@ impl Component for PreferencesDialog {
         let ctx = CTX_STATE.read_inner();
         let server = SERVER_STATE.read_inner();
 
+        CTX_STATE.subscribe(sender.input_sender(), |_| PreferencesDialogInput::Update);
         SERVER_STATE.subscribe(sender.input_sender(), |_| PreferencesDialogInput::Update);
 
         let settings = gio::Settings::new(APP_ID);
@@ -173,15 +199,20 @@ impl Component for PreferencesDialog {
     }
 
     fn pre_view() {
+        let ctx = CTX_STATE.read_inner();
         let server = SERVER_STATE.read_inner();
     }
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
         match message {
-            PreferencesDialogInput::Open => {
+            PreferencesDialogInput::Open(name) => {
                 let window = relm4::main_application().active_window();
                 root.present(window.as_ref());
                 models::server::reload();
+
+                if let Some(name) = name {
+                    root.set_visible_page_name(name);
+                }
             }
             PreferencesDialogInput::Update => {}
             PreferencesDialogInput::CatalogsIconChanged(value) => {
@@ -198,6 +229,9 @@ impl Component for PreferencesDialog {
             }
             PreferencesDialogInput::DetailsContentLogoChanged(value) => {
                 let _ = self.settings.set_boolean("details-content-logo", value);
+            }
+            PreferencesDialogInput::PlayerSubtitlesSizeChanged(value) => {
+                models::ctx::update_subtitles_size(value);
             }
             PreferencesDialogInput::ServerUrlChanged(value) => {
                 models::ctx::update_server_url(value);

@@ -11,14 +11,19 @@ use relm4::{
 };
 use rust_i18n::t;
 use stremio_core_losange::{
-    models::{self, player::PLAYER_STATE},
+    models::{self, ctx::CTX_STATE, player::PLAYER_STATE},
     types::stream::Stream,
 };
 use tokio::time::sleep;
 use tracks_menu::{TracksMenu, TracksMenuInput, TracksMenuOutput};
 use video::{Video, VideoInput, VideoOutput, VIDEO_STATE};
 
-use crate::{app::AppMsg, components::spinner::Spinner, APP_BROKER};
+use crate::{
+    app::AppMsg,
+    components::spinner::Spinner,
+    constants::{SUBTITLES_FONT_SIZES, SUBTITLES_MIN_SIZE},
+    APP_BROKER,
+};
 
 #[derive(Debug)]
 pub enum PlayerInput {
@@ -239,6 +244,13 @@ impl SimpleComponent for Player {
 
                             model.text_tracks_menu.widget(),
                             model.audio_tracks_menu.widget(),
+
+                            gtk::Button {
+                                set_icon_name: "settings",
+                                connect_clicked => move |_| {
+                                    APP_BROKER.send(AppMsg::OpenPreferences(Some("player")));
+                                },
+                            }
                         }
                     },
 
@@ -256,6 +268,7 @@ impl SimpleComponent for Player {
         let player = PLAYER_STATE.read_inner();
         let state = VIDEO_STATE.read_inner();
 
+        CTX_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateVideo);
         PLAYER_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateVideo);
         VIDEO_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateView);
 
@@ -320,6 +333,7 @@ impl SimpleComponent for Player {
                 self.video.emit(VideoInput::Unload);
             }
             PlayerInput::UpdateVideo => {
+                let ctx = CTX_STATE.read_inner();
                 let player = PLAYER_STATE.read_inner();
                 let video = VIDEO_STATE.read_inner();
 
@@ -331,6 +345,11 @@ impl SimpleComponent for Player {
 
                 if video.loaded && video.time != player.time {
                     self.video.emit(VideoInput::Seek(player.time));
+                }
+
+                let index = (ctx.settings.subtitles_size / SUBTITLES_MIN_SIZE) - 1;
+                if let Some(size) = SUBTITLES_FONT_SIZES.get(index as usize) {
+                    self.video.emit(VideoInput::SubtitlesSize(*size));
                 }
             }
             PlayerInput::UpdateView => {

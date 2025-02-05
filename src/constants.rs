@@ -11,3 +11,6 @@ pub const COMMUNITY_MANIFESTS: &[&str] = &[
     "https://v3-cinemeta.strem.io/manifest.json",
     "https://stremio-addons.com/manifest.json",
 ];
+pub const SUBTITLES_MIN_SIZE: u8 = 25;
+pub const SUBTITLES_MAX_SIZE: u8 = 175;
+pub const SUBTITLES_FONT_SIZES: &[u8] = &[5, 7, 9, 11, 13, 15, 17];

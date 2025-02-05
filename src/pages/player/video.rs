@@ -50,6 +50,7 @@ pub enum VideoInput {
     Volume(f64),
     TextTrack(i32),
     AudioTrack(i32),
+    SubtitlesSize(u8),
 }
 
 #[derive(Debug)]
@@ -172,6 +173,9 @@ impl SimpleComponent for Video {
             }
             VideoInput::AudioTrack(id) => {
                 self.set_audio_track(id);
+            }
+            VideoInput::SubtitlesSize(size) => {
+                self.set_subtitles_size(size);
             }
         }
     }
@@ -317,6 +321,11 @@ impl Video {
 
     fn set_audio_track(&self, id: i32) {
         self.playbin.set_property("current-audio", id);
+    }
+
+    fn set_subtitles_size(&self, size: u8) {
+        self.playbin
+            .set_property("subtitle-font-desc", format!("Cantarell, {}", size));
     }
 
     fn get_paused(&self) -> bool {
