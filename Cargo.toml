@@ -1,6 +1,6 @@
 [package]
 name = "losange"
-version = "0.1.1"
+version = "0.2.0"
 description = "A simple Stremio client"
 authors = ["Tim Dusser-Jolly"]
 repository = "https://github.com/tymmesyde/Losange"
