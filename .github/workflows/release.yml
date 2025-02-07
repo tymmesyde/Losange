@@ -50,4 +50,4 @@ jobs:
           files: |
             ./target/generate-rpm/*.rpm
             ./target/debian/*.deb
-            ./flatpak/*.flatpak
+            ./build-aux/flatpak/*.flatpak
