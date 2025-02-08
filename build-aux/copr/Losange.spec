@@ -1,6 +1,6 @@
 Name:           Losange
 Version:        0.2.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A simple Stremio client for GNOME
 
 License:        GPL-3.0-only
@@ -8,7 +8,7 @@ URL:            https://github.com/tymmesyde/Losange
 Source0:        https://github.com/tymmesyde/Losange/archive/v%{version}.tar.gz
 
 BuildRequires:  cargo, rust, openssl-devel, gtk4-devel, libadwaita-devel, gstreamer1-devel, gstreamer1-plugins-base-devel
-Requires:       node >= 10
+Requires:       nodejs >= 10
 
 %description
 Unofficial Stremio client
@@ -40,7 +40,10 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
-* Sun Feb 5 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.2.0-1
+* Sat Feb 8 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.2.0-2
+- Fix package file
+
+* Wed Feb 5 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.2.0-1
 - Add player subtitles size setting
 - Fix player start time
 
