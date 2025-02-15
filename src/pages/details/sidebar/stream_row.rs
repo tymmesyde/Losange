@@ -51,7 +51,7 @@ impl FactoryComponent for StreamRow {
                         set_halign: gtk::Align::Start,
                         set_ellipsize: gtk::pango::EllipsizeMode::End,
                         set_single_line_mode: true,
-                        set_label: &self.title,
+                        set_label: &self.title.no_line_breaks(),
                     },
 
                     gtk::Label {

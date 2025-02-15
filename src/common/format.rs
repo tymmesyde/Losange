@@ -13,7 +13,7 @@ impl Format for String {
     }
 
     fn no_line_breaks(&self) -> String {
-        self.replace('\n', "")
+        self.replace('\n', " ")
     }
 }
 
