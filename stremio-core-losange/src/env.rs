@@ -1,4 +1,4 @@
-use std::sync::RwLock;
+use std::{path::Path, sync::RwLock};
 
 use chrono::{DateTime, Utc};
 use futures::{future, Future, FutureExt, TryFutureExt};
@@ -41,12 +41,12 @@ lazy_static! {
 pub enum LosangeEnv {}
 
 impl LosangeEnv {
-    pub fn init(storage_location: &str) -> TryEnvFuture<()> {
+    pub fn init(data_location: &Path) -> TryEnvFuture<()> {
         *STORAGE.write().expect("STORAGE write failed") =
-            Some(Storage::new(storage_location).expect("Create Storage failed"));
+            Some(Storage::new(data_location).expect("Create Storage failed"));
 
         *FETCH.write().expect("STORAGE write failed") =
-            Some(Fetch::new(storage_location).expect("Create Fetch failed"));
+            Some(Fetch::new(data_location).expect("Create Fetch failed"));
 
         LosangeEnv::migrate_storage_schema()
             .inspect(|migration_result| debug!("Migration result: {migration_result:?}",))

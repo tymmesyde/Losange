@@ -1,4 +1,4 @@
-use std::{fs, ops::Deref, path::PathBuf, sync::Arc};
+use std::{fs, ops::Deref, path::Path, sync::Arc};
 
 use futures::future;
 use redb::{Database, TableDefinition};
@@ -13,9 +13,9 @@ pub struct Storage {
 }
 
 impl Storage {
-    pub fn new(location: &str) -> Result<Self, EnvError> {
+    pub fn new(location: &Path) -> Result<Self, EnvError> {
         fs::create_dir_all(location).map_err(|_| EnvError::StorageUnavailable)?;
-        let path = PathBuf::from(location).join("stremio.redb");
+        let path = location.join("stremio.redb");
         let db = Database::create(path).map_err(|_| EnvError::StorageUnavailable)?;
 
         let write_txn = db.begin_write().map_err(|_| EnvError::StorageUnavailable)?;

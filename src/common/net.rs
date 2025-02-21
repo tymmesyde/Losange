@@ -7,6 +7,7 @@ use relm4::{
 };
 use reqwest::{Client, Response};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use shellexpand::tilde;
 use url::Url;
 
 use crate::constants::APP_ID;
@@ -17,7 +18,9 @@ pub async fn fetch(url: Url) -> anyhow::Result<Response> {
     let client = CLIENT.get_or_init(|| {
         let settings = gio::Settings::new(APP_ID);
         let storage_location = settings.string("storage-location");
-        let path = Path::new(&storage_location).join("cache");
+
+        let expanded_path = tilde(&storage_location).to_string();
+        let path = Path::new(&expanded_path).join("cache");
 
         ClientBuilder::new(
             Client::builder()

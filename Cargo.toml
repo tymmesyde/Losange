@@ -32,6 +32,7 @@ reqwest-middleware = "0.3.3"
 rust-i18n = "3.1.2"
 rust_iso639 = "0.0.3"
 serde = { version = "1.0.217", features = ["derive"] }
+shellexpand = "3.1.0"
 stremio-core-losange = { version = "0.1.0", path = "./stremio-core-losange" }
 tokio = { version = "1.42.0", features = ["full"] }
 tracing = "0.1.41"

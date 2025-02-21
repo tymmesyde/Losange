@@ -16,8 +16,8 @@ pub struct Fetch {
 }
 
 impl Fetch {
-    pub fn new(location: &str) -> Result<Self, EnvError> {
-        let path = Path::new(&location)
+    pub fn new(location: &Path) -> Result<Self, EnvError> {
+        let path = location
             .join("cache")
             .into_os_string()
             .into_string()

@@ -1,4 +1,7 @@
-use std::sync::{Arc, RwLock};
+use std::{
+    path::Path,
+    sync::{Arc, RwLock},
+};
 
 use futures::{future, try_join, StreamExt};
 use lazy_static::lazy_static;
@@ -37,14 +40,14 @@ lazy_static! {
         Default::default();
 }
 
-pub async fn initialize(storage_location: &str) {
+pub async fn initialize(data_location: &Path) {
     if RUNTIME.read().expect("runtime read failed").is_some() {
         panic!("runtime initialization has already started");
     };
 
     *RUNTIME.write().expect("runtime write failed") = Some(Loadable::Loading);
 
-    let env_init_result = LosangeEnv::init(storage_location).await;
+    let env_init_result = LosangeEnv::init(data_location).await;
     match env_init_result {
         Ok(_) => {
             let storage_result = try_join!(

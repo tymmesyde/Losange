@@ -16,9 +16,9 @@ struct ServerUpdaterResponse {
     latest_version: String,
 }
 
-pub async fn initialize(storage_location: &str) -> anyhow::Result<Child> {
-    let file_path = Path::new(&storage_location).join("server.js");
-    let version_path = Path::new(&storage_location).join("server_version");
+pub async fn initialize(data_location: &Path) -> anyhow::Result<Child> {
+    let file_path = Path::new(&data_location).join("server.js");
+    let version_path = Path::new(&data_location).join("server_version");
 
     let latest_version = reqwest::get(SERVER_UPDATER_ENDPOINT)
         .await?

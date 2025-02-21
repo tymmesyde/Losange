@@ -1,4 +1,4 @@
-use std::process::Child;
+use std::{path::Path, process::Child};
 
 use adw::prelude::*;
 use gtk::{gio, glib};
@@ -13,6 +13,7 @@ use relm4::{
     view, AsyncComponentSender, Component, ComponentController, Controller,
 };
 use rust_i18n::t;
+use shellexpand::tilde;
 use stremio_core_losange::{core, models, types::stream::Stream};
 use url::Url;
 
@@ -343,7 +344,11 @@ impl App {
     async fn initialize_core() {
         let settings = gio::Settings::new(APP_ID);
         let storage_location = settings.string("storage-location");
-        core::initialize(&storage_location).await;
+
+        let expanded_path = tilde(&storage_location).to_string();
+        let data_location = Path::new(&expanded_path);
+
+        core::initialize(data_location).await;
     }
 
     async fn initialize_server() -> Option<Child> {
@@ -351,8 +356,11 @@ impl App {
         let autostart = settings.boolean("autostart-server");
         let storage_location = settings.string("storage-location");
 
+        let expanded_path = tilde(&storage_location).to_string();
+        let data_location = Path::new(&expanded_path);
+
         if autostart {
-            return server::initialize(&storage_location).await.ok();
+            return server::initialize(data_location).await.ok();
         }
 
         None
