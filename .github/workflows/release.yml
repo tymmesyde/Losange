@@ -15,12 +15,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Update git submodules
         run: git submodule update --init --recursive
+
       - name: Rust setup
         uses: dtolnay/rust-toolchain@stable
-      - name: Setup python
+  
+      - name: Python setup
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
       - name: Install requirements
         run: |
           sudo sh -c 'echo "deb http://archive.ubuntu.com/ubuntu/ oracular main restricted" >> /etc/apt/sources.list'
@@ -34,20 +37,29 @@ jobs:
           sudo flatpak install -y org.gnome.Platform//47
           sudo flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//24.08
           python3 -m pip install toml aiohttp
+
       - name: Build
         run: cargo build --release
+
       - name: Build deb package
         run: cargo deb
+      - name: Upload deb package to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./target/debian/*.deb
+
       - name: Strip debug symbols
         run: strip -s target/release/losange
       - name: Build rpm package
         run: cargo generate-rpm
-      - name: Build flatpak package
-        run: ./build-aux/flatpak/build.sh
-      - name: Upload assets to release
+      - name: Upload rpm package to release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ./target/generate-rpm/*.rpm
-            ./target/debian/*.deb
-            ./build-aux/flatpak/*.flatpak
+          files: ./target/generate-rpm/*.rpm
+
+      - name: Build flatpak package
+        run: ./build-aux/flatpak/build.sh
+      - name: Upload flatpak package to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./build-aux/flatpak/*.flatpak
