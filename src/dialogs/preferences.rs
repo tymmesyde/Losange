@@ -18,7 +18,6 @@ pub enum PreferencesDialogInput {
     PlayerSubtitlesSizeChanged(f64),
     ServerUrlChanged(String),
     ServerEnabledChanged(bool),
-    StorageLocationChanged(String),
 }
 
 pub struct PreferencesDialog {
@@ -157,24 +156,6 @@ impl Component for PreferencesDialog {
                         },
                     }
                 },
-            },
-
-            add = &adw::PreferencesPage {
-                set_name: Some("storage"),
-                set_title: &t!("storage"),
-                set_icon_name: Some("drive-harddisk-symbolic"),
-                set_margin_bottom: 26,
-
-                add = &adw::PreferencesGroup {
-                    adw::EntryRow {
-                        set_title: &t!("location"),
-                        set_text: &model.settings.string("storage-location"),
-                        connect_text_notify[sender] => move |row| {
-                            let value = row.text().to_string();
-                            sender.input(PreferencesDialogInput::StorageLocationChanged(value));
-                        },
-                    }
-                },
             }
         }
     }
@@ -247,9 +228,6 @@ impl Component for PreferencesDialog {
             }
             PreferencesDialogInput::ServerEnabledChanged(value) => {
                 let _ = self.settings.set_boolean("autostart-server", value);
-            }
-            PreferencesDialogInput::StorageLocationChanged(value) => {
-                let _ = self.settings.set_string("storage-location", &value);
             }
         }
     }

@@ -25,9 +25,6 @@ status: Status
 online: Online
 offline: Offline
 
-storage: Storage
-location: Location
-
 login: Login
 email: Email
 password: Password
