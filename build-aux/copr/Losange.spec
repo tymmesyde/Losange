@@ -1,6 +1,6 @@
 Name:           Losange
-Version:        0.2.0
-Release:        2%{?dist}
+Version:        0.3.0
+Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
 License:        GPL-3.0-only
@@ -40,6 +40,12 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
+* Sat Feb 22 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.3.0-1
+- Add release year, runtime and imdb note to details page
+- Use persistent data by default
+- Remove storage preferences page
+- Remove break line chars in stream titles
+
 * Sat Feb 8 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.2.0-2
 - Fix package file
 
