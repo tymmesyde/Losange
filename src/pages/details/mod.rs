@@ -110,21 +110,63 @@ impl AsyncComponent for DetailsPage {
                                         set_spacing: 12,
 
                                         gtk::Box {
-                                            model.logo.widget(),
+                                            set_orientation: gtk::Orientation::Vertical,
+                                            set_spacing: 8,
 
-                                            #[watch]
-                                            set_visible: model.settings.boolean("details-content-logo"),
-                                        },
+                                            gtk::Box {
+                                                model.logo.widget(),
 
-                                        gtk::Label {
-                                            add_css_class: relm4::css::classes::TITLE_1,
-                                            set_ellipsize: gtk::pango::EllipsizeMode::End,
-                                            set_halign: gtk::Align::Start,
-                                            #[watch]
-                                            set_label: &selected.name,
+                                                #[watch]
+                                                set_visible: model.settings.boolean("details-content-logo"),
+                                            },
 
-                                            #[watch]
-                                            set_visible: !model.settings.boolean("details-content-logo"),
+                                            gtk::Label {
+                                                add_css_class: relm4::css::classes::TITLE_1,
+                                                set_ellipsize: gtk::pango::EllipsizeMode::End,
+                                                set_halign: gtk::Align::Start,
+                                                #[watch]
+                                                set_label: &selected.name,
+
+                                                #[watch]
+                                                set_visible: !model.settings.boolean("details-content-logo"),
+                                            },
+
+                                            gtk::Box {
+                                                set_spacing: 12,
+
+                                                match &selected.released {
+                                                    Some(released) => gtk::Label {
+                                                        add_css_class: css::classes::DIM_LABEL,
+                                                        #[watch]
+                                                        set_label: released,
+                                                    },
+                                                    None => gtk::Box {
+                                                        set_visible: false,
+                                                    },
+                                                },
+
+                                                match &selected.runtime {
+                                                    Some(runtime) => gtk::Label {
+                                                        add_css_class: css::classes::DIM_LABEL,
+                                                        #[watch]
+                                                        set_label: runtime,
+                                                    },
+                                                    None => gtk::Box {
+                                                        set_visible: false,
+                                                    },
+                                                },
+
+                                                match &selected.imdb {
+                                                    Some(imdb) => gtk::Label {
+                                                        add_css_class: css::classes::DIM_LABEL,
+                                                        #[watch]
+                                                        set_label: imdb,
+                                                    },
+                                                    None => gtk::Box {
+                                                        set_visible: false,
+                                                    },
+                                                },
+                                            },
                                         },
 
                                         gtk::Box {
@@ -133,7 +175,6 @@ impl AsyncComponent for DetailsPage {
 
                                             match &selected.description {
                                                 Some(description) => gtk::Label {
-                                                    add_css_class: relm4::css::classes::DIM_LABEL,
                                                     set_halign: gtk::Align::Start,
                                                     set_wrap: true,
                                                     #[watch]

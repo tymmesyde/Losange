@@ -1,3 +1,4 @@
+use chrono::Datelike;
 use itertools::Itertools;
 use stremio_core::{
     models::continue_watching_preview::Item as ContinueWatchingItem,
@@ -15,6 +16,9 @@ pub struct Item {
     pub logo: Option<Url>,
     pub name: String,
     pub description: Option<String>,
+    pub released: Option<String>,
+    pub runtime: Option<String>,
+    pub imdb: Option<String>,
     pub genres: Vec<String>,
     pub directors: Vec<String>,
     pub writers: Vec<String>,
@@ -35,6 +39,9 @@ impl From<&MetaItemPreview> for Item {
             logo: meta_item.logo.to_owned(),
             name: meta_item.name.to_owned(),
             description: meta_item.description.to_owned(),
+            released: meta_item.released.map(|date| date.year().to_string()),
+            runtime: meta_item.runtime.to_owned(),
+            imdb: get_link(&meta_item.links, "imdb"),
             genres: get_links(&meta_item.links, "Genres"),
             directors: get_links(&meta_item.links, "Directors"),
             writers: get_links(&meta_item.links, "Writers"),
@@ -54,6 +61,12 @@ impl From<&MetaItem> for Item {
             logo: meta_item.preview.logo.to_owned(),
             name: meta_item.preview.name.to_owned(),
             description: meta_item.preview.description.to_owned(),
+            released: meta_item
+                .preview
+                .released
+                .map(|date| date.year().to_string()),
+            runtime: meta_item.preview.runtime.to_owned(),
+            imdb: get_link(&meta_item.preview.links, "imdb"),
             genres: get_links(&meta_item.preview.links, "Genres"),
             directors: get_links(&meta_item.preview.links, "Directors"),
             writers: get_links(&meta_item.preview.links, "Writers"),
@@ -96,6 +109,13 @@ impl From<&ContinueWatchingItem> for Item {
             ..Default::default()
         }
     }
+}
+
+fn get_link(links: &[Link], category: &str) -> Option<String> {
+    links
+        .iter()
+        .find(|link| link.category == category)
+        .map(|link| link.name.to_owned())
 }
 
 fn get_links(links: &[Link], category: &str) -> Vec<String> {
