@@ -3,7 +3,12 @@
     "runtime": "org.gnome.Platform",
     "runtime-version": "47",
     "sdk": "org.gnome.Sdk",
-    "sdk-extensions": ["org.freedesktop.Sdk.Extension.rust-stable"],
+    "sdk-extensions": [
+        "org.freedesktop.Sdk.Extension.rust-stable"
+    ],
+    "add-extensions": [
+        "org.freedesktop.Platform.ffmpeg-full"
+    ],
     "command": "losange",
     "finish-args": [
         "--socket=wayland",
