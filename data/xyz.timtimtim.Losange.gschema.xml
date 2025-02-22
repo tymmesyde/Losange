@@ -26,7 +26,7 @@
             <summary>Display content logo for details</summary>
         </key>
         <key name="storage-location" type="s">
-            <default>"~/.losange"</default>
+            <default>"~/.local/share/losange"</default>
             <summary>Location of the storage</summary>
         </key>
         <key name="autostart-server" type="b">

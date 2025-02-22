@@ -12,7 +12,7 @@
         "--share=ipc",
         "--share=network",
         "--device=dri",
-        "--filesystem=home"
+        "--filesystem=xdg-data"
     ],
     "build-options": {
         "append-path": "/usr/lib/sdk/rust-stable/bin"
