@@ -18,6 +18,18 @@
             </image>
             <caption>Home page</caption>
         </screenshot>
+        <screenshot>
+            <image>
+                https://raw.githubusercontent.com/tymmesyde/Losange/refs/heads/main/data/screenshots/screenshot2.png
+            </image>
+            <caption>Details page</caption>
+        </screenshot>
+        <screenshot>
+            <image>
+                https://raw.githubusercontent.com/tymmesyde/Losange/refs/heads/main/data/screenshots/screenshot3.png
+            </image>
+            <caption>Player page</caption>
+        </screenshot>
     </screenshots>
 
     <url type="homepage">https://github.com/tymmesyde/Losange</url>
