@@ -39,6 +39,12 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.3.1" date="2025-02-23">
+            <description>
+                <p>Fix player track selection</p>
+                <p>Fix player audio issues with flatpak</p>
+            </description>
+        </release>
         <release version="0.3.0" date="2025-02-22">
             <description>
                 <p>Add release year, runtime and imdb note to details page</p>

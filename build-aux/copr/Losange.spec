@@ -1,5 +1,5 @@
 Name:           Losange
-Version:        0.3.0
+Version:        0.3.1
 Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
@@ -40,6 +40,10 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
+* Sat Feb 23 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.3.1-1
+- Fix player track selection
+- Fix player audio issues with flatpak
+
 * Sat Feb 22 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.3.0-1
 - Add release year, runtime and imdb note to details page
 - Use persistent data by default
