@@ -12,7 +12,7 @@ pub struct MenuOptionInit {
 
 #[derive(Debug)]
 pub enum MenuOptionInput {
-    Toggled,
+    Selected,
 }
 
 #[derive(Debug)]
@@ -42,7 +42,11 @@ impl FactoryComponent for MenuOption {
                 set_label: Some(self.label.as_ref().map_or(&t!("original"), |label| label)),
                 set_active: self.active,
                 set_group: Some(&self.group),
-                connect_toggled => MenuOptionInput::Toggled,
+                connect_toggled[sender] => move |button| {
+                    if button.is_active() {
+                        sender.input_sender().emit(MenuOptionInput::Selected);
+                    }
+                },
             }
         }
     }
@@ -58,12 +62,10 @@ impl FactoryComponent for MenuOption {
 
     fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
         match message {
-            MenuOptionInput::Toggled => {
-                if !self.active {
-                    sender
-                        .output_sender()
-                        .emit(MenuOptionOutput::Clicked(self.id));
-                }
+            MenuOptionInput::Selected => {
+                sender
+                    .output_sender()
+                    .emit(MenuOptionOutput::Clicked(self.id));
             }
         }
     }

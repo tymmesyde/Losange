@@ -99,23 +99,18 @@ impl SimpleComponent for TracksMenu {
                     .collect_vec();
 
                 for (i, track) in tracks.iter().enumerate() {
+                    let option = MenuOptionInit {
+                        id: track.id,
+                        label: track.label.to_owned(),
+                        active: track.active,
+                        group: self.group.to_owned(),
+                    };
+
                     if i >= self.tracks.len() {
-                        self.tracks.guard().push_back(MenuOptionInit {
-                            id: track.id,
-                            label: track.label.to_owned(),
-                            active: track.active,
-                            group: self.group.to_owned(),
-                        });
+                        self.tracks.guard().push_back(option);
                     } else if tracks[i].id != self.tracks[i].id {
-                        self.tracks.guard().insert(
-                            i,
-                            MenuOptionInit {
-                                id: track.id,
-                                label: track.label.to_owned(),
-                                active: track.active,
-                                group: self.group.to_owned(),
-                            },
-                        );
+                        self.tracks.guard().remove(i);
+                        self.tracks.guard().insert(i, option);
                     }
                 }
 
