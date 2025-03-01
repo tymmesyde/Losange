@@ -81,7 +81,7 @@ dropdown.flat > button:active {
 }
 
 .colors {
-    background: linear-gradient(125deg, @background_color_0 0%, @window_bg_color 100%);
+    background: linear-gradient(125deg, @background_color_0 0%, @background_color_1 100%);
     transition-property: background;
     transition-duration: 250ms;
     transition-timing-function: ease;
