@@ -1,6 +1,10 @@
-use stremio_core::types::{
-    addon::ResourceRequest,
-    resource::{Stream as CoreStream, StreamBehaviorHints, StreamSource, Subtitles},
+use stremio_core::{
+    constants::{META_RESOURCE_NAME, STREAM_RESOURCE_NAME},
+    types::{
+        addon::{ResourcePath, ResourceRequest},
+        resource::{Stream as CoreStream, StreamBehaviorHints, StreamSource, Subtitles},
+        streams::StreamsItem,
+    },
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -27,6 +31,30 @@ impl Stream {
             meta_request: meta_request.to_owned(),
             stream_request: stream_request.to_owned(),
         }
+    }
+}
+
+impl From<&StreamsItem> for Stream {
+    fn from(streams_item: &StreamsItem) -> Self {
+        let meta_request = ResourceRequest::new(
+            streams_item.meta_transport_url.to_owned(),
+            ResourcePath::without_extra(
+                META_RESOURCE_NAME,
+                &streams_item.r#type,
+                &streams_item.meta_id,
+            ),
+        );
+
+        let stream_request = ResourceRequest::new(
+            streams_item.stream_transport_url.to_owned(),
+            ResourcePath::without_extra(
+                STREAM_RESOURCE_NAME,
+                &streams_item.r#type,
+                &streams_item.video_id,
+            ),
+        );
+
+        Stream::new(&streams_item.stream, &meta_request, &stream_request)
     }
 }
 

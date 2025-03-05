@@ -28,7 +28,11 @@ pub fn update(home: &CatalogsWithExtra, continue_watching: &ContinueWatchingPrev
     let mut state = HOME_STATE.write();
 
     let continue_watching_catalog = ctx.profile.auth.as_ref().map(|_| Catalog {
-        items: continue_watching.items.iter().map(Item::from).collect_vec(),
+        items: continue_watching
+            .items
+            .iter()
+            .map(|continue_watching_item| Item::new(continue_watching_item, &ctx.streams))
+            .collect_vec(),
         ..Default::default()
     });
 

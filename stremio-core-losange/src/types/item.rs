@@ -4,10 +4,13 @@ use stremio_core::{
     models::continue_watching_preview::Item as ContinueWatchingItem,
     types::{
         library::LibraryItem,
-        resource::{Link, MetaItem, MetaItemPreview, PosterShape, Stream, Video},
+        resource::{Link, MetaItem, MetaItemPreview, PosterShape, Video},
+        streams::{StreamsBucket, StreamsItemKey},
     },
 };
 use url::Url;
+
+use super::stream::Stream;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Item {
@@ -28,7 +31,27 @@ pub struct Item {
     pub videos: Vec<Video>,
     pub new_videos: usize,
     pub last_video_id: Option<String>,
-    pub last_stream: Option<Box<Stream>>,
+    pub last_stream: Option<Stream>,
+}
+
+impl Item {
+    pub fn new(continue_watching_item: &ContinueWatchingItem, streams: &StreamsBucket) -> Self {
+        let mut item = Item::from(continue_watching_item);
+
+        let last_stream = item
+            .last_video_id
+            .as_ref()
+            .map(|video_id| StreamsItemKey {
+                meta_id: item.id.to_owned(),
+                video_id: video_id.to_owned(),
+            })
+            .and_then(|key| streams.items.get(&key))
+            .map(Stream::from);
+
+        item.last_stream = last_stream;
+
+        item
+    }
 }
 
 impl From<&MetaItemPreview> for Item {

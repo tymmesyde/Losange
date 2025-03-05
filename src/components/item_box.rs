@@ -9,6 +9,7 @@ use relm4::{
     factory::{DynamicIndex, FactoryComponent, FactoryView, Position},
     gtk, FactorySender, RelmWidgetExt,
 };
+use stremio_core_losange::types::stream::Stream;
 use stremio_core_losange::{stremio_core::types::resource::PosterShape, types::item::Item};
 
 use crate::{
@@ -37,6 +38,7 @@ pub struct ItemBox<P: FactoryView + 'static> {
     pub size: (i32, i32),
     pub title: String,
     pub new_videos: usize,
+    pub last_stream: Option<Stream>,
     pub hover: bool,
     pub visible: bool,
 }
@@ -188,6 +190,7 @@ where
             size,
             title: init.name,
             new_videos: init.new_videos,
+            last_stream: init.last_stream,
             hover: false,
             visible: false,
         }
@@ -199,10 +202,13 @@ where
             ItemBoxInput::Show => self.visible = true,
             ItemBoxInput::Hide => self.visible = false,
             ItemBoxInput::Hover(state) => self.hover = state,
-            ItemBoxInput::Clicked => APP_BROKER.send(AppMsg::OpenDetails((
-                self.id.to_owned(),
-                self.r#type.to_owned(),
-            ))),
+            ItemBoxInput::Clicked => match &self.last_stream {
+                Some(stream) => APP_BROKER.send(AppMsg::OpenStream(Box::new(stream.to_owned()))),
+                None => APP_BROKER.send(AppMsg::OpenDetails((
+                    self.id.to_owned(),
+                    self.r#type.to_owned(),
+                ))),
+            },
         }
     }
 }
