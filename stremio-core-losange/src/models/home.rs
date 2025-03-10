@@ -31,7 +31,7 @@ pub fn update(home: &CatalogsWithExtra, continue_watching: &ContinueWatchingPrev
         items: continue_watching
             .items
             .iter()
-            .map(|continue_watching_item| Item::new(continue_watching_item, &ctx.streams))
+            .map(|continue_watching_item| Item::from(continue_watching_item).with(&ctx.streams))
             .collect_vec(),
         ..Default::default()
     });
