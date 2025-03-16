@@ -39,6 +39,13 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.4.0" date="2025-03-16">
+            <description>
+                <p>Open continue watching items in player</p>
+                <p>Add progress to continue watching items</p>
+                <p>Improve gradient on details page</p>
+            </description>
+        </release>
         <release version="0.3.1" date="2025-02-23">
             <description>
                 <p>Fix player track selection</p>
