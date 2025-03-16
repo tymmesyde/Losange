@@ -4,7 +4,7 @@ use std::{convert::TryFrom, path::Path};
 
 use futures::future;
 use http::{Method, Request};
-use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache};
+use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache, HttpCacheOptions};
 use reqwest::{Body, Client};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde::{Deserialize, Serialize};
@@ -17,11 +17,7 @@ pub struct Fetch {
 
 impl Fetch {
     pub fn new(location: &Path) -> Result<Self, EnvError> {
-        let path = location
-            .join("cache")
-            .into_os_string()
-            .into_string()
-            .map_err(|_| EnvError::Fetch("Failed to create cache path".to_owned()))?;
+        let path = location.join("cache");
 
         let client = ClientBuilder::new(
             Client::builder()
@@ -35,7 +31,7 @@ impl Fetch {
         .with(Cache(HttpCache {
             mode: CacheMode::Reload,
             manager: CACacheManager { path },
-            options: None,
+            options: HttpCacheOptions::default(),
         }))
         .build();
 
