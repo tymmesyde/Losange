@@ -39,6 +39,7 @@ pub struct ItemBox<P: FactoryView + 'static> {
     pub title: String,
     pub new_videos: usize,
     pub last_stream: Option<Stream>,
+    pub progress: f64,
     pub hover: bool,
     pub visible: bool,
 }
@@ -138,6 +139,15 @@ where
                                 }
                             },
 
+                            add_overlay = &gtk::ProgressBar {
+                                add_css_class: css::classes::OSD,
+                                set_valign: gtk::Align::End,
+                                set_fraction: self.progress / 100.0,
+
+                                #[watch]
+                                set_visible: self.progress > 0.0,
+                            },
+
                             self.image.widget(),
                         }
                     },
@@ -191,6 +201,7 @@ where
             title: init.name,
             new_videos: init.new_videos,
             last_stream: init.last_stream,
+            progress: init.progress,
             hover: false,
             visible: false,
         }

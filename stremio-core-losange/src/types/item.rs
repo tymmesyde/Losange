@@ -30,6 +30,7 @@ pub struct Item {
     pub shape: PosterShape,
     pub videos: Vec<Video>,
     pub new_videos: usize,
+    pub progress: f64,
     pub last_video_id: Option<String>,
     pub last_stream: Option<Stream>,
 }
@@ -99,6 +100,7 @@ impl From<&ContinueWatchingItem> for Item {
     fn from(continue_watching_item: &ContinueWatchingItem) -> Self {
         let mut item = Item::from(&continue_watching_item.library_item);
         item.new_videos = continue_watching_item.notifications;
+        item.progress = continue_watching_item.library_item.progress();
         item.last_video_id = continue_watching_item
             .library_item
             .state
