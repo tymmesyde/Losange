@@ -24,6 +24,7 @@ pub struct MediaTrack {
 
 #[derive(Default, Debug)]
 pub struct VideoState {
+    pub ready: bool,
     pub loaded: bool,
     pub paused: bool,
     pub volume: f64,
@@ -41,6 +42,7 @@ pub enum VideoInput {
     StateChanged,
     PropertyChanged(String),
     TimeChanged,
+    Ready,
     Buffering(i32),
     Load(String),
     Unload,
@@ -135,6 +137,10 @@ impl SimpleComponent for Video {
                     _ => {}
                 }
             }
+            VideoInput::Ready => {
+                let mut state = VIDEO_STATE.write();
+                state.ready = true;
+            }
             VideoInput::Buffering(percent) => {
                 let mut state = VIDEO_STATE.write();
                 state.buffering = percent < 100;
@@ -149,6 +155,7 @@ impl SimpleComponent for Video {
             VideoInput::Unload => {
                 let mut state = VIDEO_STATE.write();
                 state.loaded = false;
+                state.ready = false;
 
                 self.stop();
             }
@@ -226,6 +233,7 @@ impl Video {
         if let Some(bus) = self.pipeline.bus() {
             let bus_watch_handler = move |_: &gst::Bus, msg: &gst::Message| {
                 match msg.view() {
+                    gst::MessageView::AsyncDone(_) => sender.input_sender().emit(VideoInput::Ready),
                     gst::MessageView::Buffering(buffering) => sender
                         .input_sender()
                         .emit(VideoInput::Buffering(buffering.percent())),

@@ -346,11 +346,6 @@ impl SimpleComponent for Player {
                     }
                 }
 
-                if video.loaded && !video.paused && !self.start_time {
-                    self.start_time = true;
-                    self.video.emit(VideoInput::Seek(player.time));
-                }
-
                 let index = (ctx.settings.subtitles_size / SUBTITLES_MIN_SIZE) - 1;
                 if let Some(size) = SUBTITLES_FONT_SIZES.get(index as usize) {
                     self.video.emit(VideoInput::SubtitlesSize(*size));
@@ -358,6 +353,12 @@ impl SimpleComponent for Player {
             }
             PlayerInput::UpdateView => {
                 let video = VIDEO_STATE.read_inner();
+                let player = PLAYER_STATE.read_inner();
+
+                if video.ready && video.loaded && !self.start_time {
+                    self.start_time = true;
+                    self.video.emit(VideoInput::Seek(player.time));
+                }
 
                 self.text_tracks_menu
                     .emit(TracksMenuInput::Update(video.text_tracks.to_owned()));
