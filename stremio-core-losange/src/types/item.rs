@@ -98,6 +98,7 @@ impl From<&LibraryItem> for Item {
 impl From<&ContinueWatchingItem> for Item {
     fn from(continue_watching_item: &ContinueWatchingItem) -> Self {
         let mut item = Item::from(&continue_watching_item.library_item);
+        item.new_videos = continue_watching_item.notifications;
         item.last_video_id = continue_watching_item
             .library_item
             .state
