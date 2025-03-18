@@ -6,9 +6,13 @@
     "sdk-extensions": [
         "org.freedesktop.Sdk.Extension.rust-stable"
     ],
-    "add-extensions": [
-        "org.freedesktop.Platform.ffmpeg-full"
-    ],
+    "add-extensions": {
+        "org.freedesktop.Platform.ffmpeg-full": {
+			"version": "24.08",
+			"directory": "lib/ffmpeg",
+			"add-ld-path": "."
+        }
+    },
     "command": "losange",
     "finish-args": [
         "--socket=wayland",
@@ -41,6 +45,7 @@
                 "install -Dm644 ./build-aux/flatpak/xyz.timtimtim.Losange.desktop -t /app/share/applications/",
                 "install -Dm644 ./data/xyz.timtimtim.Losange.metainfo.xml -t /app/share/metainfo/",
                 "install -Dm644 ./data/xyz.timtimtim.Losange.gschema.xml -t /app/share/glib-2.0/schemas/",
+                "mkdir -p /app/lib/ffmpeg",
                 "glib-compile-schemas /app/share/glib-2.0/schemas"
             ],
             "sources": [
