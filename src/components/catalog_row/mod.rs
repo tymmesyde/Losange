@@ -79,9 +79,8 @@ impl FactoryComponent for CatalogRow {
                     },
 
                     gtk::Label {
-                        set_css_classes: &[css::classes::TITLE_3, css::classes::DIM_LABEL],
+                        set_css_classes: &[css::classes::TITLE_4, css::classes::DIM_LABEL],
                         set_valign: gtk::Align::Center,
-                        set_margin_bottom: 1,
                         set_label: self.addon_name.as_deref().unwrap_or_default(),
 
                         #[watch]
@@ -89,9 +88,8 @@ impl FactoryComponent for CatalogRow {
                     },
 
                     gtk::Label {
-                        add_css_class: css::classes::TITLE_2,
+                        add_css_class: css::classes::TITLE_4,
                         set_valign: gtk::Align::Center,
-                        set_margin_bottom: 1,
                         set_label: self.name.as_ref().unwrap_or(&t!("continue_watching").to_string()),
                     }
                 },
