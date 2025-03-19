@@ -1,5 +1,5 @@
 Name:           Losange
-Version:        0.4.0
+Version:        0.4.1
 Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
@@ -40,7 +40,11 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
-* Sun May 16 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.4.0-1
+* Wed Mar 19 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.4.1-1
+- Reduce font sizes of catalog titles
+- Fix audio issue with flatpak
+
+* Sun Mar 16 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.4.0-1
 - Open continue watching items in player 
 - Add progress to continue watching items
 - Improve gradient on details page
