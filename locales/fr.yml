@@ -91,5 +91,26 @@ timeswatched: Nombre de visionnages
 watched: Regardé
 notwatched: Non regardé
 
+default: Défaut
+action: Action
+adventure: Aventure
+animation: Animation
+biography: Biographie
+comedy: Comédie
+crime: Crime
+documentary: Documentaire
+drama: Drame
+family: Famille
+fantasy: Fantasy
+history: Histoire
+horror: Horreur
+mystery: Mystère
+romance: Romance
+sci-fi: Sci-Fi
+sport: Sport
+thriller: Thriller
+war: Guerre
+western: Western
+
 original: Original
 error_player: Impossible de lire la vidéo

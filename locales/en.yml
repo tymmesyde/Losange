@@ -91,5 +91,26 @@ timeswatched: Times watched
 watched: Watched
 notwatched: Not watched
 
+default: Default
+action: Action
+adventure: Adventure
+animation: Animation
+biography: Biography
+comedy: Comedy
+crime: Crime
+documentary: Documentary
+drama: Drama
+family: Family
+fantasy: Fantasy
+history: History
+horror: Horror
+mystery: Mystery
+romance: Romance
+sci-fi: Sci-Fi
+sport: Sport
+thriller: Thriller
+war: War
+western: Western
+
 original: Original
 error_player: Unable to play video

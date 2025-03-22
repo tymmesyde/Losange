@@ -8,7 +8,7 @@ use rust_i18n::t;
 use stremio_core_losange::models::{self, discover::DISCOVER_STATE};
 
 use crate::{
-    common::layout,
+    common::{layout, translate},
     components::{
         dropdown::{DropDown, DropDownInput, DropDownOutput},
         item_box::{ItemBox, ItemBoxInput},
@@ -23,11 +23,13 @@ pub enum DiscoverPageInput {
     LayoutUpdate,
     TypeChanged(usize),
     CatalogChanged(usize),
+    GenreChanged(usize),
 }
 
 pub struct DiscoverPage {
     types: Controller<DropDown>,
     catalogs: Controller<DropDown>,
+    genres: Controller<DropDown>,
     scrolled_window: gtk::ScrolledWindow,
     items: FactoryVecDeque<ItemBox<gtk::FlowBox>>,
 }
@@ -53,6 +55,7 @@ impl SimpleComponent for DiscoverPage {
 
                     model.types.widget(),
                     model.catalogs.widget(),
+                    model.genres.widget(),
                 },
 
                 #[template]
@@ -117,6 +120,13 @@ impl SimpleComponent for DiscoverPage {
                     DropDownOutput::Selected(index) => DiscoverPageInput::CatalogChanged(index),
                 });
 
+        let genres =
+            DropDown::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    DropDownOutput::Selected(index) => DiscoverPageInput::GenreChanged(index),
+                });
+
         let items = FactoryVecDeque::builder()
             .launch(gtk::FlowBox::default())
             .detach();
@@ -124,6 +134,7 @@ impl SimpleComponent for DiscoverPage {
         let model = DiscoverPage {
             types,
             catalogs,
+            genres,
             scrolled_window,
             items,
         };
@@ -159,6 +170,14 @@ impl SimpleComponent for DiscoverPage {
 
                 self.catalogs.emit(DropDownInput::Update(catalogs));
 
+                let genres = state
+                    .genres
+                    .iter()
+                    .map(|selectable| translate::genre(&selectable.value))
+                    .collect_vec();
+
+                self.genres.emit(DropDownInput::Update(genres));
+
                 for (i, item) in state.items.iter().enumerate() {
                     if i >= self.items.len() {
                         self.items.guard().push_back(item.to_owned());
@@ -185,6 +204,9 @@ impl SimpleComponent for DiscoverPage {
             }
             DiscoverPageInput::CatalogChanged(index) => {
                 models::discover::load_with_catalog(index);
+            }
+            DiscoverPageInput::GenreChanged(index) => {
+                models::discover::load_with_genre(index);
             }
         }
     }
