@@ -48,6 +48,7 @@ dnf install flatpak-builder
 flatpak install -y org.gnome.Sdk//48
 flatpak install -y org.gnome.Platform//48
 flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//24.08
+flatpak install -y org.freedesktop.Platform.ffmpeg-full//24.08
 python3 -m pip install toml aiohttp
 ```
 
