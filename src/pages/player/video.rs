@@ -7,6 +7,8 @@ use relm4::{gtk, ComponentParts, ComponentSender, RelmWidgetExt, SharedState, Si
 use serde::Serialize;
 use tracing::error;
 
+use crate::constants::{BUFFER_DURATION, BUFFER_SIZE};
+
 const MS_IN_NS: i64 = 1000000;
 
 pub enum MediaTrackType {
@@ -144,6 +146,12 @@ impl SimpleComponent for Video {
             VideoInput::Buffering(percent) => {
                 let mut state = VIDEO_STATE.write();
                 state.buffering = percent < 100;
+
+                if percent < 100 {
+                    self.pause();
+                } else {
+                    self.play();
+                }
             }
             VideoInput::Load(uri) => {
                 let mut state = VIDEO_STATE.write();
@@ -222,6 +230,8 @@ impl Video {
         playbin.set_property("video-sink", sink);
         playbin.add_property_notify_watch(None, false);
         playbin.set_property("subtitle-font-desc", "Cantarell");
+        playbin.set_property("buffer-size", BUFFER_SIZE);
+        playbin.set_property("buffer-duration", BUFFER_DURATION);
 
         let pipeline = gst::Pipeline::new();
         pipeline.add(&playbin)?;
