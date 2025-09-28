@@ -18,7 +18,9 @@ use crate::APP_BROKER;
 
 #[derive(Debug)]
 pub enum AddonsInput {
-    Load,
+    LoadInstalled,
+    LoadOfficial,
+    LoadCommunity,
     UpdateInstalled,
     UpdateCommunity,
     InstalledAddonClicked(usize),
@@ -45,7 +47,6 @@ impl AsyncComponent for Addons {
         adw::NavigationPage {
             set_title: "Addons",
             set_tag: Some("addons"),
-            connect_realize => AddonsInput::Load,
 
             adw::BreakpointBin {
                 set_size_request: (150, 150),
@@ -90,7 +91,9 @@ impl AsyncComponent for Addons {
                                     set_expand: true,
                                     set_valign: gtk::Align::Start,
                                 },
-                            }
+                            },
+
+                            connect_realize => AddonsInput::LoadInstalled,
                         },
 
                         add_titled_with_icon[Some("official"), &t!("official_addons"), "verified-checkmark"] = &adw::PreferencesPage {
@@ -103,7 +106,9 @@ impl AsyncComponent for Addons {
                                     set_expand: true,
                                     set_valign: gtk::Align::Start,
                                 },
-                            }
+                            },
+
+                            connect_realize => AddonsInput::LoadOfficial,
                         },
 
                         add_titled_with_icon[Some("community"), &t!("community_addons"), "people"] = &adw::PreferencesPage {
@@ -136,7 +141,9 @@ impl AsyncComponent for Addons {
                                         },
                                     }
                                 }
-                            }
+                            },
+
+                            connect_realize => AddonsInput::LoadCommunity,
                         },
                     },
 
@@ -206,14 +213,17 @@ impl AsyncComponent for Addons {
         _root: &Self::Root,
     ) {
         match message {
-            AddonsInput::Load => {
+            AddonsInput::LoadInstalled => {
                 models::installed_addons::load();
-                models::remote_addons::load(COMMUNITY_MANIFESTS[0]);
-
+            }
+            AddonsInput::LoadOfficial => {
                 self.official_list.guard().clear();
                 for addon in OFFICIAL_ADDONS.iter() {
                     self.official_list.guard().push_back(Addon::from(addon));
                 }
+            }
+            AddonsInput::LoadCommunity => {
+                models::remote_addons::load(COMMUNITY_MANIFESTS[0]);
             }
             AddonsInput::UpdateInstalled => {
                 let state = INSTALLED_ADDONS_STATE.read_inner();
