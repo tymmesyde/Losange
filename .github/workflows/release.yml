@@ -33,9 +33,10 @@ jobs:
           cargo install cargo-generate-rpm
           sudo apt-get -y install flatpak-builder
           sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y org.gnome.Sdk//47
-          sudo flatpak install -y org.gnome.Platform//47
-          sudo flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//24.08
+          sudo flatpak install -y org.gnome.Sdk//49
+          sudo flatpak install -y org.gnome.Platform//49
+          sudo flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//25.08
+          sudo flatpak install -y org.freedesktop.Platform.ffmpeg-full//25.08
           python3 -m pip install toml aiohttp
 
       - name: Build

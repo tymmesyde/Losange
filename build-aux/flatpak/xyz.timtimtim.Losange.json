@@ -1,14 +1,14 @@
 {
     "app-id": "xyz.timtimtim.Losange",
     "runtime": "org.gnome.Platform",
-    "runtime-version": "48",
+    "runtime-version": "49",
     "sdk": "org.gnome.Sdk",
     "sdk-extensions": [
         "org.freedesktop.Sdk.Extension.rust-stable"
     ],
     "add-extensions": {
         "org.freedesktop.Platform.ffmpeg-full": {
-			"version": "24.08",
+			"version": "25.08",
 			"directory": "lib/ffmpeg",
 			"add-ld-path": "."
         }
