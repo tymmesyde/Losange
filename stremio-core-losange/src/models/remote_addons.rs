@@ -50,7 +50,7 @@ pub fn load(manifest_url: &'static str) {
                     path: ResourcePath::without_extra("addon_catalog", "all", "community"),
                 },
             }))),
-            None,
+            Some(LosangeModelField::RemoteAddons),
         );
     }
 }

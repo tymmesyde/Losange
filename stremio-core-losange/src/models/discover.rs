@@ -51,7 +51,10 @@ pub fn update(discover: &CatalogWithFilters<MetaItemPreview>) {
 pub fn load(request: Option<ResourceRequest>) {
     let selected = request.map(|request| Selected { request });
 
-    dispatch(Action::Load(ActionLoad::CatalogWithFilters(selected)), None);
+    dispatch(
+        Action::Load(ActionLoad::CatalogWithFilters(selected)),
+        Some(LosangeModelField::Discover),
+    );
 }
 
 pub fn load_with_type(index: usize) {
