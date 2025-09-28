@@ -1,5 +1,5 @@
 Name:           Losange
-Version:        0.4.1
+Version:        0.5.0
 Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
@@ -40,6 +40,13 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
+* Wed Sep 28 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.5.0-1
+- Add genre dropdown to discover page
+- Improve addons page performance
+- Improved playback in some cases
+- Fix discover and addons page unloading each other
+- Fix aligment of placeholder icons
+
 * Wed Mar 19 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.4.1-1
 - Reduce font sizes of catalog titles
 - Fix audio issue with flatpak

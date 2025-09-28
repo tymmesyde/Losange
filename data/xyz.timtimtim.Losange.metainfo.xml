@@ -39,6 +39,15 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.5.0" date="2025-09-28">
+            <description>
+                <p>Add genre dropdown to discover page</p>
+                <p>Improve addons page performance</p>
+                <p>Improved playback in some cases</p>
+                <p>Fix discover and addons page unloading each other</p>
+                <p>Fix aligment of placeholder icons</p>
+            </description>
+        </release>
         <release version="0.4.1" date="2025-03-19">
             <description>
                 <p>Reduce font sizes of catalog titles</p>
