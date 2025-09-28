@@ -30,7 +30,7 @@ pub fn update(ctx: &Ctx) {
 
 pub fn sync_with_api() {
     dispatch(
-        Action::Ctx(ActionCtx::PullUserFromAPI),
+        Action::Ctx(ActionCtx::PullUserFromAPI { token: None }),
         Some(LosangeModelField::Ctx),
     );
     dispatch(

@@ -1,0 +1,22 @@
+fn main() {
+    relm4_icons_build::bundle_icons(
+        "icons.rs",
+        Some("xyz.timtimtim.Losange"),
+        None::<&str>,
+        None::<&str>,
+        [
+            "compass2",
+            "library",
+            "puzzle-piece",
+            "people",
+            "left",
+            "right",
+            "verified-checkmark",
+            "play",
+            "external-link",
+            "language",
+            "sound-wave",
+            "settings",
+        ],
+    );
+}

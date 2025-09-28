@@ -16,7 +16,7 @@ itertools = "0.13.0"
 lazy_static = "1.5.0"
 once_cell = "1.19.0"
 redb = "2.1.1"
-relm4 = "0.9.0"
+relm4 = "0.10.0"
 reqwest = { version = "0.12.14", features = ["json", "rustls-tls"] }
 reqwest-middleware = "0.4.1"
 serde = "1.0.203"

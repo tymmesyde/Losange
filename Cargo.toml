@@ -18,15 +18,15 @@ anyhow = "1.0.97"
 chrono = "0.4.40"
 clap = { version = "4.5.35", features = ["derive"] }
 color-thief = "0.2.2"
-gst = { version = "0.23.5", package = "gstreamer", features = ["v1_24"] }
-gstgtk4 = { version = "0.13.5", package = "gst-plugin-gtk4", features = ["gtk_v4_16", "x11egl", "x11glx", "wayland"] }
+gst = { version = "0.24.2", package = "gstreamer", features = ["v1_24"] }
+gstgtk4 = { version = "0.14.2", package = "gst-plugin-gtk4", features = ["gtk_v4_16", "x11egl", "x11glx", "wayland"] }
 hsl = "0.1.1"
 http-cache-reqwest = "0.15.1"
 itertools = "0.14.0"
 open = "5.3.2"
-relm4 = { version = "0.9.1", features = ["libadwaita", "gnome_47"] }
-relm4-components = { version = "0.9.1", features = ["libadwaita"] }
-relm4-icons = "0.9.0"
+relm4 = { version = "0.10.0", features = ["libadwaita", "gnome_48"] }
+relm4-components = { version = "0.10.0", features = ["libadwaita"] }
+relm4-icons = "0.10.0"
 reqwest = { version = "0.12.15", features = ["rustls-tls", "http2", "json"] }
 reqwest-middleware = "0.4.1"
 rust-i18n = "3.1.4"
@@ -39,6 +39,12 @@ tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 url = "2.5.4"
 xml = "0.8.20"
+
+[patch.crates-io]
+stremio-serde-hex = { git = "https://github.com/Stremio/serde-hex", branch = "fix/imports"}
+
+[build-dependencies]
+relm4-icons-build = "0.10"
 
 [package.metadata.generate-rpm]
 assets = [
