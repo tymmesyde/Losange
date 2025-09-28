@@ -17,9 +17,7 @@ use relm4::{
 };
 use rust_i18n::i18n;
 
-mod icons {
-    include!(concat!(env!("OUT_DIR"), "/icons.rs"));
-}
+include!(concat!(env!("OUT_DIR"), "/icons.rs"));
 
 i18n!("locales", fallback = "en");
 
@@ -38,7 +36,7 @@ pub struct Args {
 fn main() {
     tracing_subscriber::fmt::init();
 
-    relm4_icons::initialize_icons(icons::GRESOURCE_BYTES, icons::RESOURCE_PREFIX);
+    relm4_icons::initialize_icons(GRESOURCE_BYTES, RESOURCE_PREFIX);
     relm4::set_global_css(include_str!("style.css"));
 
     gst::init().expect("Failed to initialize gstreamer");
