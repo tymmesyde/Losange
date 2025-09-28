@@ -59,7 +59,7 @@ impl FactoryComponent for CatalogRow {
             set_spacing: 12,
 
             gtk::Box {
-                set_margin_horizontal: 12,
+                set_margin_horizontal: 16,
                 set_spacing: 12,
 
                 gtk::Box {
@@ -160,7 +160,7 @@ impl FactoryComponent for CatalogRow {
                             set_halign: gtk::Align::Start,
                             set_expand: true,
                             set_spacing: 16,
-                            set_margin_horizontal: 12,
+                            set_margin_horizontal: 16,
                         },
                     }
                 }
