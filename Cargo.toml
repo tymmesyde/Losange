@@ -19,7 +19,7 @@ chrono = "0.4.40"
 clap = { version = "4.5.35", features = ["derive"] }
 color-thief = "0.2.2"
 gst = { version = "0.24.2", package = "gstreamer", features = ["v1_26"] }
-gstgtk4 = { version = "0.14.2", package = "gst-plugin-gtk4", features = ["gtk_v4_16", "x11egl", "x11glx", "wayland"] }
+gstgtk4 = { version = "0.14.2", package = "gst-plugin-gtk4", features = ["gtk_v4_18", "x11egl", "x11glx", "wayland"] }
 hsl = "0.1.1"
 http-cache-reqwest = "0.15.1"
 itertools = "0.14.0"
