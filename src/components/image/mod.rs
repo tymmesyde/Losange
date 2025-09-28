@@ -43,6 +43,7 @@ impl AsyncComponent for Image {
             set_maximum_size: model.size.0,
 
             gtk::Box {
+                set_expand: true,
                 set_align: model.align,
                 set_height_request: model.size.1,
 
