@@ -3698,8 +3698,9 @@ checksum = "4bb5e344bd639722596917f372885c62b489b8442bca7f75b08f4af19e2230af"
 
 [[package]]
 name = "stremio-serde-hex"
-version = "0.1.1"
-source = "git+https://github.com/Stremio/serde-hex?branch=fix%2Fimports#a753c1f9589644f2e1f8462388730894ee121c9f"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "464efee107369cc666ff9d2d2f219dcb816bb119cfd87e5e5eeef6b1a484c7e8"
 dependencies = [
  "array-init",
  "serde",
