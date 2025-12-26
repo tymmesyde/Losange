@@ -1,5 +1,5 @@
 Name:           Losange
-Version:        0.5.0
+Version:        0.6.0
 Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
@@ -40,7 +40,11 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
-* Wed Sep 28 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.5.0-1
+* Fri Dec 26 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.6.0-1
+- Improve playback (now using MPV as internal player)
+- Add subtitles position setting
+
+* Tue Sep 28 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.5.0-1
 - Add genre dropdown to discover page
 - Improve addons page performance
 - Improved playback in some cases
