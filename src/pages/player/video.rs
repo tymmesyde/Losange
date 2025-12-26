@@ -1,24 +1,34 @@
-use std::time::Duration;
+use std::{cell::RefCell, env, os::raw::c_void, rc::Rc};
 
-use gst::prelude::*;
-use gtk::{gdk, glib};
+use gtk::{gdk::GLContext, glib, prelude::*};
 use itertools::Itertools;
+use libc::{setlocale, LC_NUMERIC};
+use libmpv2::{
+    events::{Event, PropertyData},
+    render::{OpenGLInitParams, RenderContext, RenderParam, RenderParamApiType},
+    Format, Mpv,
+};
 use relm4::{gtk, ComponentParts, ComponentSender, RelmWidgetExt, SharedState, SimpleComponent};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tracing::error;
 
-use crate::constants::{BUFFER_DURATION, BUFFER_SIZE};
+fn get_proc_address(_context: &GLContext, name: &str) -> *mut c_void {
+    epoxy::get_proc_addr(name) as _
+}
 
-const MS_IN_NS: i64 = 1000000;
+const SECOND: f64 = 1000.0;
 
-pub enum MediaTrackType {
-    Text,
-    Audio,
+#[derive(Debug, Deserialize)]
+struct Track {
+    id: i64,
+    r#type: String,
+    lang: Option<String>,
+    selected: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct MediaTrack {
-    pub id: i32,
+    pub id: i64,
     pub lang: String,
     pub label: Option<String>,
     pub active: bool,
@@ -26,7 +36,6 @@ pub struct MediaTrack {
 
 #[derive(Default, Debug)]
 pub struct VideoState {
-    pub ready: bool,
     pub loaded: bool,
     pub paused: bool,
     pub volume: f64,
@@ -41,36 +50,32 @@ pub static VIDEO_STATE: SharedState<VideoState> = SharedState::new();
 
 #[derive(Debug)]
 pub enum VideoInput {
-    StateChanged,
-    PropertyChanged(String),
-    TimeChanged,
-    Ready,
-    Buffering(i32),
-    Load(String),
+    Update,
+    Load((String, f64)),
     Unload,
     Play,
     Pause,
     Seek(f64),
     Volume(f64),
-    TextTrack(i32),
-    AudioTrack(i32),
-    SubtitlesSize(u8),
+    TextTrack(i64),
+    AudioTrack(i64),
+    SubtitlesSize(f64),
 }
 
 #[derive(Debug)]
 pub enum VideoOutput {
     PauseChanged(bool),
     TimeChanged(f64, f64),
+    TracksChanged,
     Ended,
     Error,
 }
 
 pub struct Video {
-    paintable: gdk::Paintable,
-    playbin: gst::Element,
-    pipeline: gst::Pipeline,
-    bus_watch: Option<gst::bus::BusWatchGuard>,
-    timeout_id: Option<glib::SourceId>,
+    mpv: Rc<RefCell<Mpv>>,
+    render_context: Rc<RefCell<Option<RenderContext>>>,
+    events_source: Option<glib::SourceId>,
+    gl_area: gtk::GLArea,
 }
 
 #[relm4::component(pub)]
@@ -80,27 +85,104 @@ impl SimpleComponent for Video {
     type Output = VideoOutput;
 
     view! {
-        gtk::Picture {
-            set_expand: true,
-            set_paintable: Some(&model.paintable),
+        gtk::Box {
+            #[local_ref]
+            gl_area -> gtk::GLArea {
+                set_expand: true,
+
+                connect_realize[sender] => move |gl_area| {
+                    gl_area.make_current();
+
+                    if gl_area.error().is_some() {
+                        return;
+                    }
+
+                    if let Some(context) = gl_area.context() {
+                        let mut mpv = mpv.borrow_mut();
+                        let mpv_handle = unsafe { mpv.ctx.as_mut() };
+
+                        let render_context_result = RenderContext::new(
+                            mpv_handle,
+                            vec![
+                                RenderParam::ApiType(RenderParamApiType::OpenGl),
+                                RenderParam::InitParams(OpenGLInitParams {
+                                    get_proc_address,
+                                    ctx: context,
+                                }),
+                                RenderParam::BlockForTargetTime(false),
+                            ],
+                        );
+
+                        match render_context_result {
+                            Ok(mut render_context) => {
+                                let sender = sender.clone();
+                                render_context.set_update_callback(move || {
+                                    sender.input_sender().emit(VideoInput::Update);
+                                });
+
+                                *render_context_realize.borrow_mut() = Some(render_context);
+                            }
+                            Err(e) => {
+                                error!("Failed to create render context: {}", e);
+                            }
+                        }
+                    }
+                },
+
+                connect_unrealize[sender] => move |_| {
+                    if let Some(render_context) = render_context_unrealize.borrow_mut().take() {
+                        drop(render_context);
+                    }
+
+                    sender.input_sender().emit(VideoInput::Unload);
+                },
+
+                connect_render => move |gl_area, _| {
+                    let mut fbo = 0;
+                    unsafe {
+                        epoxy::GetIntegerv(epoxy::FRAMEBUFFER_BINDING, &mut fbo);
+                    }
+
+                    let width = gl_area.width();
+                    let height = gl_area.height();
+                    let scale_factor = gl_area.native()
+                        .and_then(|native| native.surface())
+                        .map(|surface| surface.scale_factor())
+                        .unwrap_or(1);
+
+                    if let Some(ref render_context) = *render_context_render.borrow() {
+                        if let Err(e) = render_context.render::<GLContext>(fbo, width * scale_factor, height * scale_factor, true) {
+                            error!("Failed to render frame: {}", e);
+                            return glib::Propagation::Stop;
+                        }
+                    }
+
+                    glib::Propagation::Proceed
+                },
+            }
         }
     }
 
     fn init(
         _init: Self::Init,
         root: Self::Root,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (paintable, playbin, pipeline) = Self::init().expect("Failed to initialize player");
+        let mpv = Self::create_mpv().expect("Failed to initialize player");
+        let gl_area = gtk::GLArea::default();
 
         let model = Video {
-            paintable,
-            playbin,
-            pipeline,
-            bus_watch: None,
-            timeout_id: None,
+            mpv: Rc::new(RefCell::new(mpv)),
+            render_context: Rc::new(RefCell::new(None)),
+            events_source: None,
+            gl_area,
         };
 
+        let gl_area = &model.gl_area;
+        let mpv = model.mpv.clone();
+        let render_context_realize = model.render_context.clone();
+        let render_context_unrealize = model.render_context.clone();
+        let render_context_render = model.render_context.clone();
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
@@ -108,74 +190,28 @@ impl SimpleComponent for Video {
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
-            VideoInput::StateChanged => {
-                let mut state = VIDEO_STATE.write();
-                state.paused = self.get_paused();
-                state.duration = self.get_duration();
-                state.text_tracks = self.get_media_tracks(MediaTrackType::Text);
-                state.audio_tracks = self.get_media_tracks(MediaTrackType::Audio);
+            VideoInput::Update => {
+                self.gl_area.queue_render();
             }
-            VideoInput::TimeChanged => {
-                if !self.get_paused() {
-                    let mut state = VIDEO_STATE.write();
-                    state.time = self.get_time();
-                    sender
-                        .output_sender()
-                        .emit(VideoOutput::TimeChanged(state.time, state.duration));
-                }
-            }
-            VideoInput::PropertyChanged(name) => {
-                let mut state = VIDEO_STATE.write();
-                match name.as_str() {
-                    "volume" => {
-                        state.volume = self.get_volume();
-                    }
-                    "current-text" => {
-                        state.text_tracks = self.get_media_tracks(MediaTrackType::Text);
-                    }
-                    "current-audio" => {
-                        state.audio_tracks = self.get_media_tracks(MediaTrackType::Audio);
-                    }
-                    _ => {}
-                }
-            }
-            VideoInput::Ready => {
-                let mut state = VIDEO_STATE.write();
-                state.ready = true;
-            }
-            VideoInput::Buffering(percent) => {
-                let mut state = VIDEO_STATE.write();
-                state.buffering = percent < 100;
-
-                if percent < 100 {
-                    self.pause();
-                } else {
-                    self.play();
-                }
-            }
-            VideoInput::Load(uri) => {
+            VideoInput::Load((uri, start_time)) => {
                 let mut state = VIDEO_STATE.write();
                 state.loaded = true;
                 state.buffering = true;
+                drop(state);
 
-                self.start(&uri, sender);
+                self.start(&uri, start_time, sender);
             }
             VideoInput::Unload => {
                 let mut state = VIDEO_STATE.write();
                 state.loaded = false;
-                state.ready = false;
 
                 self.stop();
             }
             VideoInput::Play => {
                 self.play();
-                sender
-                    .output_sender()
-                    .emit(VideoOutput::PauseChanged(false));
             }
             VideoInput::Pause => {
                 self.pause();
-                sender.output_sender().emit(VideoOutput::PauseChanged(true));
             }
             VideoInput::Seek(time) => {
                 self.set_time(time);
@@ -201,208 +237,184 @@ impl SimpleComponent for Video {
 }
 
 impl Video {
-    fn init() -> Result<(gdk::Paintable, gst::Element, gst::Pipeline), glib::BoolError> {
-        let gtksink = gst::ElementFactory::make("gtk4paintablesink").build()?;
+    fn create_mpv() -> anyhow::Result<Mpv> {
+        // Required for libmpv to work alongside gtk
+        unsafe {
+            setlocale(LC_NUMERIC, c"C".as_ptr());
+        }
 
-        let paintable = gtksink.property::<gtk::gdk::Paintable>("paintable");
-
-        let sink = match paintable.property::<Option<gdk::GLContext>>("gl-context") {
-            Some(_) => gst::ElementFactory::make("glsinkbin")
-                .property("sink", &gtksink)
-                .build()?,
-            None => {
-                let sink = gst::Bin::default();
-                let convert = gst::ElementFactory::make("videoconvert").build()?;
-
-                sink.add(&convert)?;
-                sink.add(&gtksink)?;
-                convert.link(&gtksink)?;
-
-                sink.add_pad(&gst::GhostPad::with_target(
-                    &convert.static_pad("sink").unwrap(),
-                )?)?;
-
-                sink.upcast()
-            }
+        let log = env::var("RUST_LOG");
+        let msg_level = match log {
+            Ok(scope) => &format!("all={}", scope.as_str()),
+            _ => "all=no",
         };
 
-        let playbin = gst::ElementFactory::make("playbin").build()?;
-        playbin.set_property("video-sink", sink);
-        playbin.add_property_notify_watch(None, false);
-        playbin.set_property("subtitle-font-desc", "Cantarell");
-        playbin.set_property("buffer-size", BUFFER_SIZE);
-        playbin.set_property("buffer-duration", BUFFER_DURATION);
+        let mpv = Mpv::with_initializer(|init| {
+            init.set_property("vo", "libmpv")?;
+            init.set_property("video-timing-offset", "0")?;
+            init.set_property("terminal", "yes")?;
+            init.set_property("msg-level", msg_level)?;
+            Ok(())
+        })
+        .expect("Failed to create mpv");
 
-        let pipeline = gst::Pipeline::new();
-        pipeline.add(&playbin)?;
+        mpv.disable_deprecated_events().ok();
 
-        Ok((paintable, playbin, pipeline))
+        mpv.observe_property("pause", Format::Flag, 0).ok();
+        mpv.observe_property("time-pos", Format::Double, 0).ok();
+        mpv.observe_property("duration", Format::Double, 0).ok();
+        mpv.observe_property("volume", Format::Double, 0).ok();
+        mpv.observe_property("cache-buffering-state", Format::Int64, 0)
+            .ok();
+        mpv.observe_property("track-list", Format::String, 0).ok();
+
+        Ok(mpv)
     }
 
-    fn register_bus_watch(&mut self, sender: ComponentSender<Self>) {
-        if let Some(bus) = self.pipeline.bus() {
-            let bus_watch_handler = move |_: &gst::Bus, msg: &gst::Message| {
-                match msg.view() {
-                    gst::MessageView::AsyncDone(_) => sender.input_sender().emit(VideoInput::Ready),
-                    gst::MessageView::Buffering(buffering) => sender
-                        .input_sender()
-                        .emit(VideoInput::Buffering(buffering.percent())),
-                    gst::MessageView::StateChanged(..) => {
-                        sender.input_sender().emit(VideoInput::StateChanged)
+    fn watch_events(&mut self, sender: ComponentSender<Self>) {
+        let mpv = self.mpv.clone();
+
+        self.events_source = Some(glib::idle_add_local(move || {
+            if let Some(Ok(event)) = mpv.borrow_mut().wait_event(0.0) {
+                match event {
+                    Event::PropertyChange { name, change, .. } => {
+                        let mut state = VIDEO_STATE.write();
+
+                        match change {
+                            PropertyData::Flag(value) if name == "pause" => {
+                                state.paused = value;
+                                sender.output_sender().emit(VideoOutput::PauseChanged(true));
+                            }
+                            PropertyData::Double(value) => match name {
+                                "time-pos" => {
+                                    state.time = value * SECOND;
+                                    sender
+                                        .output_sender()
+                                        .emit(VideoOutput::TimeChanged(state.time, state.duration));
+                                }
+                                "duration" => state.duration = value * SECOND,
+                                "volume" => state.volume = value,
+                                _ => {}
+                            },
+                            PropertyData::Int64(value) if name == "cache-buffering-state" => {
+                                state.buffering = value < 100;
+                            }
+                            PropertyData::Str(value) if name == "track-list" => {
+                                if let Ok(list) = serde_json::from_str::<Vec<Track>>(value) {
+                                    let (text, audio) = Self::create_media_tracks(list);
+                                    state.text_tracks = text;
+                                    state.audio_tracks = audio;
+                                    sender.output_sender().emit(VideoOutput::TracksChanged);
+                                }
+                            }
+                            _ => {}
+                        }
                     }
-                    gst::MessageView::PropertyNotify(message) => {
-                        let (_, name, _) = message.get();
-                        sender
-                            .input_sender()
-                            .emit(VideoInput::PropertyChanged(name.to_string()))
-                    }
-                    gst::MessageView::Eos(..) => sender.output_sender().emit(VideoOutput::Ended),
-                    gst::MessageView::Error(e) => {
-                        error!("{e}");
-                        sender.output_sender().emit(VideoOutput::Error)
+                    Event::EndFile(reason) => {
+                        if reason == 4 {
+                            sender.output_sender().emit(VideoOutput::Error);
+                        }
+
+                        if reason == 0 {
+                            sender.output_sender().emit(VideoOutput::Ended);
+                        }
                     }
                     _ => {}
-                };
-
-                glib::ControlFlow::Continue
-            };
-
-            if let Ok(bus_watch) = bus.add_watch_local(bus_watch_handler) {
-                self.bus_watch = Some(bus_watch);
+                }
             }
+
+            glib::ControlFlow::Continue
+        }));
+    }
+
+    fn create_media_tracks(list: Vec<Track>) -> (Vec<MediaTrack>, Vec<MediaTrack>) {
+        let media_tracks = |r#type: &str| {
+            list.iter()
+                .filter(|track| track.r#type == r#type)
+                .map(|track| {
+                    let label = track.lang.as_ref().and_then(|lang| {
+                        rust_iso639::from_code_1(lang)
+                            .or(rust_iso639::from_code_2t(lang))
+                            .or(rust_iso639::from_code_2b(lang))
+                            .map(|code| code.name.to_string())
+                    });
+
+                    MediaTrack {
+                        id: track.id,
+                        label,
+                        lang: track.lang.to_owned().unwrap_or("und".to_owned()),
+                        active: track.selected,
+                    }
+                })
+                .collect_vec()
+        };
+
+        (media_tracks("sub"), media_tracks("audio"))
+    }
+
+    fn start(&mut self, uri: &str, start_time: f64, sender: ComponentSender<Self>) {
+        self.watch_events(sender);
+
+        let start = &format!("start=+{}", start_time / SECOND);
+        if let Err(e) = self
+            .mpv
+            .borrow()
+            .command("loadfile", &[uri, "replace", "-1", start])
+        {
+            error!("Failed to start: {e}");
         }
-    }
-
-    fn register_time_timeout(&mut self, sender: ComponentSender<Self>) {
-        self.timeout_id = Some(glib::timeout_add_local(
-            Duration::from_millis(500),
-            move || {
-                sender.input_sender().emit(VideoInput::TimeChanged);
-
-                glib::ControlFlow::Continue
-            },
-        ))
-    }
-
-    fn start(&mut self, uri: &str, sender: ComponentSender<Self>) {
-        self.playbin.set_property("uri", uri);
-        self.play();
-
-        let bus_watch_sender = sender.clone();
-        self.register_bus_watch(bus_watch_sender);
-
-        let time_timeout = sender.clone();
-        self.register_time_timeout(time_timeout);
     }
 
     fn stop(&mut self) {
-        if let Err(e) = self.pipeline.set_state(gst::State::Null) {
-            error!("Failed to set the pipeline to `Null` state: {e}");
+        if let Some(source) = self.events_source.take() {
+            source.remove();
         }
 
-        drop(self.bus_watch.take());
-
-        if let Some(timeout_id) = self.timeout_id.take() {
-            timeout_id.remove();
+        if let Err(e) = self.mpv.borrow().command("stop", &[]) {
+            error!("Failed to stop: {e}");
         }
     }
 
     fn play(&self) {
-        if let Err(e) = self.pipeline.set_state(gst::State::Playing) {
-            error!("Failed to set the pipeline to `Playing` state: {e}");
+        if let Err(e) = self.mpv.borrow().set_property("pause", false) {
+            error!("Failed to play: {e}");
         }
     }
 
     fn pause(&self) {
-        if let Err(e) = self.pipeline.set_state(gst::State::Paused) {
-            error!("Failed to set the pipeline to `Paused` state: {e}");
+        if let Err(e) = self.mpv.borrow().set_property("pause", true) {
+            error!("Failed to pause: {e}");
         }
     }
 
     fn set_time(&self, time: f64) {
-        if let Err(e) = self.playbin.seek_simple(
-            gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
-            gst::ClockTime::from_mseconds(time as u64),
-        ) {
-            error!("Failed to seek: {e}");
+        let value = time / SECOND;
+        if let Err(e) = self.mpv.borrow().set_property("time-pos", value) {
+            error!("Failed to set time: {e}");
         }
     }
 
     fn set_volume(&self, volume: f64) {
-        let value = volume / 100.0;
-        self.playbin.set_property("volume", value);
-    }
-
-    fn set_text_track(&self, id: i32) {
-        self.playbin.set_property("current-text", id);
-    }
-
-    fn set_audio_track(&self, id: i32) {
-        self.playbin.set_property("current-audio", id);
-    }
-
-    fn set_subtitles_size(&self, size: u8) {
-        self.playbin
-            .set_property("subtitle-font-desc", format!("Cantarell, {}", size));
-    }
-
-    fn get_paused(&self) -> bool {
-        !matches!(self.playbin.current_state(), gst::State::Playing)
-    }
-
-    fn get_duration(&self) -> f64 {
-        let duration_value = self.playbin.query_duration_generic(gst::Format::Time);
-        match duration_value {
-            Some(duration) => (duration.value() / MS_IN_NS) as f64,
-            None => 0.0,
+        if let Err(e) = self.mpv.borrow().set_property("volume", volume) {
+            error!("Failed to set volume: {e}");
         }
     }
 
-    fn get_time(&self) -> f64 {
-        let position_value = self.playbin.query_position_generic(gst::Format::Time);
-        match position_value {
-            Some(position) => (position.value() / MS_IN_NS) as f64,
-            None => 0.0,
+    fn set_text_track(&self, id: i64) {
+        if let Err(e) = self.mpv.borrow().set_property("sid", id) {
+            error!("Failed to set text track: {e}");
         }
     }
 
-    fn get_volume(&self) -> f64 {
-        (self.playbin.property::<f64>("volume") * 100.0).round()
+    fn set_audio_track(&self, id: i64) {
+        if let Err(e) = self.mpv.borrow().set_property("aid", id) {
+            error!("Failed to set audio track: {e}");
+        }
     }
 
-    fn get_media_tracks(&self, track_type: MediaTrackType) -> Vec<MediaTrack> {
-        let (count_property, current_property) = match track_type {
-            MediaTrackType::Text => ("n-text", "current-text"),
-            MediaTrackType::Audio => ("n-audio", "current-audio"),
-        };
-
-        let tracks_count = self.playbin.property::<i32>(count_property);
-        let active_track = self.playbin.property::<i32>(current_property);
-
-        (0..tracks_count)
-            .map(|track_id| {
-                let lang = self.get_track_lang(&track_type, track_id);
-                let label = rust_iso639::from_code_1(&lang).map(|lang| lang.name.to_owned());
-
-                MediaTrack {
-                    id: track_id,
-                    lang,
-                    label,
-                    active: active_track == track_id,
-                }
-            })
-            .collect_vec()
-    }
-
-    fn get_track_lang(&self, track_type: &MediaTrackType, track_id: i32) -> String {
-        let signal = match track_type {
-            MediaTrackType::Text => "get-text-tags",
-            MediaTrackType::Audio => "get-audio-tags",
-        };
-
-        self.playbin
-            .emit_by_name::<Option<gst::TagList>>(signal, &[&track_id])
-            .and_then(|tags| tags.get::<gst::tags::LanguageCode>())
-            .map_or("und".to_owned(), |code| code.get().to_owned())
+    fn set_subtitles_size(&self, size: f64) {
+        if let Err(e) = self.mpv.borrow().set_property("sub-scale", size) {
+            error!("Failed to set subtitles size: {e}");
+        }
     }
 }

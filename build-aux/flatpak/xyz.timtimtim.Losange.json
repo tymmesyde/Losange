@@ -24,7 +24,8 @@
         "--filesystem=xdg-data"
     ],
     "build-options": {
-        "append-path": "/usr/lib/sdk/rust-stable/bin"
+        "append-path": "/usr/lib/sdk/rust-stable/bin",
+        "append-pkg-config-path": "/app/lib/pkgconfig:/app/lib64/pkgconfig"
     },
     "modules": [
         {
@@ -32,7 +33,8 @@
             "buildsystem": "simple",
             "build-options": {
                 "env": {
-                    "CARGO_HOME": "/run/build/losange/cargo"
+                    "CARGO_HOME": "/run/build/losange/cargo",
+                    "RUSTFLAGS": "-L /app/lib -L /app/lib64 -C link-arg=-Wl,-rpath-link=/app/lib -C link-arg=-Wl,-rpath-link=/app/lib64"
                 }
             },
             "build-commands": [
@@ -54,6 +56,64 @@
                     "path": "../../"
                 },
                 "cargo-sources.json"
+            ],
+            "modules": [
+                {
+                    "name": "libmpv",
+                    "buildsystem": "meson",
+                    "config-opts": [
+                        "-Dbuild-date=false",
+                        "-Dcplayer=false",
+                        "-Dlibmpv=true",
+                        "-Dmanpage-build=disabled"
+                    ],
+                    "cleanup": [
+                        "/include",
+                        "/lib/pkgconfig"
+                    ],
+                    "sources": [
+                        {
+                            "type": "archive",
+                            "url": "https://github.com/mpv-player/mpv/archive/v0.41.0.tar.gz",
+                            "sha256": "ee21092a5ee427353392360929dc64645c54479aefdb5babc5cfbb5fad626209"
+                        }
+                    ],
+                    "modules": [
+                        {
+                            "name": "libplacebo",
+                            "buildsystem": "meson",
+                            "config-opts": [
+                                "-Ddemos=false"
+                            ],
+                            "cleanup": [
+                                "/include",
+                                "/lib/pkgconfig"
+                            ],
+                            "sources": [
+                                {
+                                    "type": "git",
+                                    "url": "https://github.com/haasn/libplacebo.git",
+                                    "branch": "master"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "libass",
+                            "buildsystem": "meson",
+                            "cleanup": [
+                                "/include",
+                                "/lib/pkgconfig"
+                            ],
+                            "sources": [
+                                {
+                                    "type": "archive",
+                                    "url": "https://github.com/libass/libass/archive/0.17.4.tar.gz",
+                                    "sha256": "c287d180d93dc9c9021872574b618ac49027e84cc90e1289318b1ee68bb42251"
+                                }
+                            ]
+                        }
+                    ]
+                }
             ]
         },
         {

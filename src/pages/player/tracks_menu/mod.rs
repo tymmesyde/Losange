@@ -1,6 +1,5 @@
 mod menu_option;
 
-use itertools::Itertools;
 use menu_option::{MenuOption, MenuOptionInit, MenuOptionOutput};
 use relm4::{
     gtk::{
@@ -18,12 +17,12 @@ type TracksMenuInit = &'static str;
 #[derive(Debug)]
 pub enum TracksMenuInput {
     Update(Vec<MediaTrack>),
-    TrackClicked(i32),
+    TrackClicked(i64),
 }
 
 #[derive(Debug)]
 pub enum TracksMenuOutput {
-    TrackChanged(i32),
+    TrackChanged(i64),
 }
 
 pub struct TracksMenu {
@@ -93,30 +92,16 @@ impl SimpleComponent for TracksMenu {
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>) {
         match msg {
             TracksMenuInput::Update(media_tracks) => {
-                let tracks = media_tracks
-                    .iter()
-                    .sorted_by(|a, b| Ord::cmp(&a.label, &b.label))
-                    .collect_vec();
+                self.tracks.guard().clear();
 
-                for (i, track) in tracks.iter().enumerate() {
-                    let option = MenuOptionInit {
-                        id: track.id,
-                        label: track.label.to_owned(),
-                        active: track.active,
-                        group: self.group.to_owned(),
-                    };
+                let options = media_tracks.iter().map(|track| MenuOptionInit {
+                    id: track.id,
+                    label: track.label.to_owned(),
+                    active: track.active,
+                    group: self.group.to_owned(),
+                });
 
-                    if i >= self.tracks.len() {
-                        self.tracks.guard().push_back(option);
-                    } else if tracks[i].id != self.tracks[i].id {
-                        self.tracks.guard().remove(i);
-                        self.tracks.guard().insert(i, option);
-                    }
-                }
-
-                while self.tracks.len() > tracks.len() {
-                    self.tracks.guard().pop_back();
-                }
+                self.tracks.extend(options);
             }
             TracksMenuInput::TrackClicked(index) => {
                 sender

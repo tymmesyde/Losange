@@ -6,6 +6,8 @@ mod dialogs;
 mod pages;
 mod server;
 
+use std::ptr;
+
 use app::{App, AppMsg};
 use clap::Parser;
 use constants::APP_ID;
@@ -39,11 +41,17 @@ fn main() {
     relm4_icons::initialize_icons(GRESOURCE_BYTES, RESOURCE_PREFIX);
     relm4::set_global_css(include_str!("style.css"));
 
-    gst::init().expect("Failed to initialize gstreamer");
-    gstgtk4::plugin_register_static().expect("Failed to register gstgtk4 plugin");
-
     let language = gtk::default_language();
     rust_i18n::set_locale(&language.to_str());
+
+    let library = unsafe { libloading::os::unix::Library::new("libepoxy.so.0") }
+        .expect("Failed to load libepoxy");
+
+    epoxy::load_with(|name| {
+        unsafe { library.get::<_>(name.as_bytes()) }
+            .map(|symbol| *symbol)
+            .unwrap_or(ptr::null())
+    });
 
     let app = relm4::main_application();
     let mut actions = RelmActionGroup::<AppActionGroup>::new();
@@ -66,8 +74,4 @@ fn main() {
     app.with_args(vec![])
         .with_broker(&APP_BROKER)
         .run_async::<App>(args);
-
-    unsafe {
-        gst::deinit();
-    }
 }

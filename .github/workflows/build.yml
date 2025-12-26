@@ -19,9 +19,9 @@ jobs:
           components: rustfmt, clippy
       - name: Install dependencies
         run: |
-          sudo sh -c 'echo "deb http://archive.ubuntu.com/ubuntu/ plucky main" >> /etc/apt/sources.list'
+          sudo sed -i -e 's/noble/plucky/g' /etc/apt/sources.list.d/ubuntu.sources
           sudo apt-get -y update
-          sudo apt-get -y install build-essential libgtk-4-dev libadwaita-1-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+          sudo apt-get -y install build-essential libgtk-4-dev libadwaita-1-dev libmpv-dev
       - name: Lint fmt
         run: cargo fmt --all -- --check
       - name: Lint clippy

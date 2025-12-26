@@ -32,13 +32,13 @@ git clone --recurse-submodules https://github.com/tymmesyde/Losange
 
 #### Fedora
 ```bash
-dnf install gtk4-devel libadwaita-devel gstreamer1-devel gstreamer1-plugins-base-devel
+dnf install gtk4-devel libadwaita-devel mpv-devel
 cargo install cargo-generate-rpm
 ```
 
 #### Ubuntu
 ```bash
-apt install libgtk-4-dev libadwaita-1-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+apt install libgtk-4-dev libadwaita-1-dev libmpv-dev
 cargo install cargo-deb
 ```
 

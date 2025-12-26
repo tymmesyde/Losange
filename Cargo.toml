@@ -18,11 +18,13 @@ anyhow = "1.0.97"
 chrono = "0.4.40"
 clap = { version = "4.5.35", features = ["derive"] }
 color-thief = "0.2.2"
-gst = { version = "0.24.2", package = "gstreamer", features = ["v1_26"] }
-gstgtk4 = { version = "0.14.2", package = "gst-plugin-gtk4", features = ["gtk_v4_18", "x11egl", "x11glx", "wayland"] }
+epoxy = "0.1.0"
 hsl = "0.1.1"
 http-cache-reqwest = "0.15.1"
 itertools = "0.14.0"
+libc = "0.2.178"
+libloading = "0.9.0"
+libmpv2 = "5.0.2"
 open = "5.3.2"
 relm4 = { git = "https://github.com/Relm4/Relm4", features = ["libadwaita", "gnome_48"] }
 relm4-icons = "0.10.0"
@@ -31,6 +33,7 @@ reqwest-middleware = "0.4.1"
 rust-i18n = "3.1.4"
 rust_iso639 = "0.0.3"
 serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.147"
 shellexpand = "3.1.0"
 stremio-core-losange = { version = "0.1.0", path = "./stremio-core-losange" }
 tokio = { version = "1.44.2", features = ["full"] }

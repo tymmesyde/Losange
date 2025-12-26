@@ -13,6 +13,3 @@ pub const COMMUNITY_MANIFESTS: &[&str] = &[
 ];
 pub const SUBTITLES_MIN_SIZE: u8 = 25;
 pub const SUBTITLES_MAX_SIZE: u8 = 175;
-pub const SUBTITLES_FONT_SIZES: &[u8] = &[5, 7, 9, 11, 13, 15, 17];
-pub const BUFFER_SIZE: i32 = 5 * 1024 * 1024;
-pub const BUFFER_DURATION: i64 = 5 * 1000000000;
