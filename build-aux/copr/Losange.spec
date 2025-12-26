@@ -7,7 +7,7 @@ License:        GPL-3.0-only
 URL:            https://github.com/tymmesyde/Losange
 Source0:        https://github.com/tymmesyde/Losange/archive/v%{version}.tar.gz
 
-BuildRequires:  cargo, rust, openssl-devel, gtk4-devel, libadwaita-devel, gstreamer1-devel, gstreamer1-plugins-base-devel
+BuildRequires:  cargo, rust, openssl-devel, gtk4-devel, libadwaita-devel, mpv-devel, libepoxy-devel
 Requires:       nodejs >= 10
 
 %description
