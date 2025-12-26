@@ -60,6 +60,7 @@ pub enum VideoInput {
     TextTrack(i64),
     AudioTrack(i64),
     SubtitlesSize(f64),
+    SubtitlesPosition(f64),
 }
 
 #[derive(Debug)]
@@ -227,6 +228,9 @@ impl SimpleComponent for Video {
             }
             VideoInput::SubtitlesSize(size) => {
                 self.set_subtitles_size(size);
+            }
+            VideoInput::SubtitlesPosition(position) => {
+                self.set_subtitles_position(position);
             }
         }
     }
@@ -415,6 +419,12 @@ impl Video {
     fn set_subtitles_size(&self, size: f64) {
         if let Err(e) = self.mpv.borrow().set_property("sub-scale", size) {
             error!("Failed to set subtitles size: {e}");
+        }
+    }
+
+    fn set_subtitles_position(&self, position: f64) {
+        if let Err(e) = self.mpv.borrow().set_property("sub-pos", position) {
+            error!("Failed to set subtitles position: {e}");
         }
     }
 }

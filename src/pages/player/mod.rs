@@ -341,6 +341,9 @@ impl SimpleComponent for Player {
 
                 let size = ctx.settings.subtitles_size as f64 / 100.0;
                 self.video.emit(VideoInput::SubtitlesSize(size));
+
+                let position = 100.0 - ctx.settings.subtitles_offset as f64;
+                self.video.emit(VideoInput::SubtitlesPosition(position));
             }
             PlayerInput::MouseMove(position) => {
                 if self.mouse_position != position {

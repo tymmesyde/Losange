@@ -1,4 +1,4 @@
-use crate::constants::{APP_ID, SUBTITLES_MAX_SIZE, SUBTITLES_MIN_SIZE};
+use crate::constants::{APP_ID, SUBTITLES_MAX_OFFSET, SUBTITLES_MAX_SIZE, SUBTITLES_MIN_OFFSET, SUBTITLES_MIN_SIZE};
 use adw::prelude::*;
 use gtk::gio;
 use relm4::{adw, gtk, Component, ComponentParts, ComponentSender};
@@ -16,6 +16,7 @@ pub enum PreferencesDialogInput {
     DetailsContentColorsChanged(bool),
     DetailsContentLogoChanged(bool),
     PlayerSubtitlesSizeChanged(f64),
+    PlayerSubtitlesOffsetChanged(f64),
     ServerUrlChanged(String),
     ServerEnabledChanged(bool),
 }
@@ -115,6 +116,18 @@ impl Component for PreferencesDialog {
                             let value = row.value();
                             sender.input(PreferencesDialogInput::PlayerSubtitlesSizeChanged(value));
                         } @subtitles_size_handler,
+                    },
+                    adw::SpinRow::with_range(SUBTITLES_MIN_OFFSET as f64, SUBTITLES_MAX_OFFSET as f64, 5.0) {
+                        set_title: &t!("subtitles_position"),
+
+                        #[watch]
+                        #[block_signal(subtitles_offset_handler)]
+                        set_value: ctx.settings.subtitles_offset.into(),
+
+                        connect_value_notify[sender] => move |row| {
+                            let value = row.value();
+                            sender.input(PreferencesDialogInput::PlayerSubtitlesOffsetChanged(value));
+                        } @subtitles_offset_handler,
                     }
                 },
             },
@@ -215,6 +228,12 @@ impl Component for PreferencesDialog {
             PreferencesDialogInput::PlayerSubtitlesSizeChanged(value) => {
                 models::ctx::update_settings(|mut settings| {
                     settings.subtitles_size = value as u8;
+                    settings
+                });
+            }
+            PreferencesDialogInput::PlayerSubtitlesOffsetChanged(value) => {
+                models::ctx::update_settings(|mut settings| {
+                    settings.subtitles_offset = value as u8;
                     settings
                 });
             }

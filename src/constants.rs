@@ -13,3 +13,5 @@ pub const COMMUNITY_MANIFESTS: &[&str] = &[
 ];
 pub const SUBTITLES_MIN_SIZE: u8 = 25;
 pub const SUBTITLES_MAX_SIZE: u8 = 175;
+pub const SUBTITLES_MIN_OFFSET: u8 = 0;
+pub const SUBTITLES_MAX_OFFSET: u8 = 100;
