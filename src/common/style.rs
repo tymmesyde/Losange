@@ -1,7 +1,6 @@
-use gst::prelude::ObjectExt;
 use gtk::gdk;
 use itertools::Itertools;
-use relm4::gtk;
+use relm4::gtk::{self, glib::object::ObjectExt};
 
 pub fn create_css_provider() -> gtk::CssProvider {
     let css_provider = gtk::CssProvider::new();

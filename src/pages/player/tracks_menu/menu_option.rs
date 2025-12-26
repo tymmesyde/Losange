@@ -4,7 +4,7 @@ use relm4::{gtk, RelmWidgetExt};
 use rust_i18n::t;
 
 pub struct MenuOptionInit {
-    pub id: i32,
+    pub id: i64,
     pub label: Option<String>,
     pub active: bool,
     pub group: gtk::CheckButton,
@@ -17,11 +17,11 @@ pub enum MenuOptionInput {
 
 #[derive(Debug)]
 pub enum MenuOptionOutput {
-    Clicked(i32),
+    Clicked(i64),
 }
 
 pub struct MenuOption {
-    pub id: i32,
+    pub id: i64,
     label: Option<String>,
     active: bool,
     group: gtk::CheckButton,

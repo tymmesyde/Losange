@@ -18,19 +18,13 @@ use tokio::time::sleep;
 use tracks_menu::{TracksMenu, TracksMenuInput, TracksMenuOutput};
 use video::{Video, VideoInput, VideoOutput, VIDEO_STATE};
 
-use crate::{
-    app::AppMsg,
-    components::spinner::Spinner,
-    constants::{SUBTITLES_FONT_SIZES, SUBTITLES_MIN_SIZE},
-    APP_BROKER,
-};
+use crate::{app::AppMsg, components::spinner::Spinner, APP_BROKER};
 
 #[derive(Debug)]
 pub enum PlayerInput {
     Load(Box<Stream>),
     Unload,
     UpdateVideo,
-    UpdateView,
     MouseMove((f64, f64)),
     MouseEnterControls,
     MouseLeaveControls,
@@ -40,11 +34,12 @@ pub enum PlayerInput {
     SeekPrev,
     SeekNext,
     Volume,
-    TextTrackChanged(i32),
-    AudioTrackChanged(i32),
+    TextTrackChanged(i64),
+    AudioTrackChanged(i64),
     Fullscreen,
     PauseChanged(bool),
     TimeChanged(f64, f64),
+    TracksChanged,
     Ended,
     Error,
 }
@@ -53,7 +48,6 @@ pub struct Player {
     video: Controller<Video>,
     immersed: bool,
     fullscreen: bool,
-    start_time: bool,
     mouse_position: (f64, f64),
     immersed_timeout: Option<JoinHandle<()>>,
     hovering_controls: bool,
@@ -271,7 +265,6 @@ impl SimpleComponent for Player {
 
         CTX_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateVideo);
         PLAYER_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateVideo);
-        VIDEO_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateView);
 
         let video = Video::builder()
             .launch(())
@@ -280,6 +273,7 @@ impl SimpleComponent for Player {
                 VideoOutput::TimeChanged(time, duration) => {
                     PlayerInput::TimeChanged(time, duration)
                 }
+                VideoOutput::TracksChanged => PlayerInput::TracksChanged,
                 VideoOutput::Ended => PlayerInput::Ended,
                 VideoOutput::Error => PlayerInput::Error,
             });
@@ -305,7 +299,6 @@ impl SimpleComponent for Player {
             video,
             immersed: false,
             fullscreen: false,
-            start_time: false,
             mouse_position: (0.0, 0.0),
             immersed_timeout: None,
             hovering_controls: false,
@@ -333,7 +326,6 @@ impl SimpleComponent for Player {
             PlayerInput::Unload => {
                 models::player::unload();
                 self.video.emit(VideoInput::Unload);
-                self.start_time = false;
             }
             PlayerInput::UpdateVideo => {
                 let ctx = CTX_STATE.read_inner();
@@ -342,28 +334,13 @@ impl SimpleComponent for Player {
 
                 if !video.loaded {
                     if let Some(uri) = &player.uri {
-                        self.video.emit(VideoInput::Load(uri.to_string()));
+                        self.video
+                            .emit(VideoInput::Load((uri.to_string(), player.time)));
                     }
                 }
 
-                let index = (ctx.settings.subtitles_size / SUBTITLES_MIN_SIZE) - 1;
-                if let Some(size) = SUBTITLES_FONT_SIZES.get(index as usize) {
-                    self.video.emit(VideoInput::SubtitlesSize(*size));
-                }
-            }
-            PlayerInput::UpdateView => {
-                let video = VIDEO_STATE.read_inner();
-                let player = PLAYER_STATE.read_inner();
-
-                if video.ready && video.loaded && !self.start_time {
-                    self.start_time = true;
-                    self.video.emit(VideoInput::Seek(player.time));
-                }
-
-                self.text_tracks_menu
-                    .emit(TracksMenuInput::Update(video.text_tracks.to_owned()));
-                self.audio_tracks_menu
-                    .emit(TracksMenuInput::Update(video.audio_tracks.to_owned()));
+                let size = ctx.settings.subtitles_size as f64 / 100.0;
+                self.video.emit(VideoInput::SubtitlesSize(size));
             }
             PlayerInput::MouseMove(position) => {
                 if self.mouse_position != position {
@@ -441,6 +418,14 @@ impl SimpleComponent for Player {
             }
             PlayerInput::TimeChanged(time, duration) => {
                 models::player::update_time(time, duration);
+            }
+            PlayerInput::TracksChanged => {
+                let video = VIDEO_STATE.read_inner();
+
+                self.text_tracks_menu
+                    .emit(TracksMenuInput::Update(video.text_tracks.to_owned()));
+                self.audio_tracks_menu
+                    .emit(TracksMenuInput::Update(video.audio_tracks.to_owned()));
             }
             PlayerInput::Ended => {
                 APP_BROKER.send(AppMsg::NavigateBack);
