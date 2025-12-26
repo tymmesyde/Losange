@@ -7,7 +7,7 @@ use relm4::{
     actions::{RelmAction, RelmActionGroup},
     adw,
     component::{AsyncComponent, AsyncComponentParts},
-    gtk,
+    css, gtk,
     loading_widgets::LoadingWidgets,
     prelude::*,
     view, AsyncComponentSender, Component, ComponentController, Controller,
@@ -85,6 +85,12 @@ impl AsyncComponent for App {
 
     view! {
         main_window = adw::ApplicationWindow {
+            add_css_class: if cfg!(debug_assertions) {
+                css::classes::DEVEL
+            } else {
+                css::classes::BACKGROUND
+            },
+
             add_breakpoint = adw::Breakpoint::new(adw::BreakpointCondition::new_length(
                 adw::BreakpointConditionLengthType::MaxWidth,
                 600.0,
