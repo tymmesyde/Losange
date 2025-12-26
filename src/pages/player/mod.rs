@@ -193,6 +193,15 @@ impl SimpleComponent for Player {
                                     "audio-volume-medium",
                                 ],
 
+                                set_adjustment: &gtk::Adjustment::new(
+                                    50.0,
+                                    0.0,
+                                    150.0,
+                                    10.0,
+                                    10.0,
+                                    0.0,
+                                ),
+
                                 #[watch]
                                 #[block_signal(volume_handler)]
                                 set_value: state.volume,
