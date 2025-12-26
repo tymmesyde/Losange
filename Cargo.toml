@@ -24,8 +24,7 @@ hsl = "0.1.1"
 http-cache-reqwest = "0.15.1"
 itertools = "0.14.0"
 open = "5.3.2"
-relm4 = { version = "0.10.0", features = ["libadwaita", "gnome_48"] }
-relm4-components = { version = "0.10.0", features = ["libadwaita"] }
+relm4 = { git = "https://github.com/Relm4/Relm4", features = ["libadwaita", "gnome_48"] }
 relm4-icons = "0.10.0"
 reqwest = { version = "0.12.15", features = ["rustls-tls", "http2", "json"] }
 reqwest-middleware = "0.4.1"
@@ -35,7 +34,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 shellexpand = "3.1.0"
 stremio-core-losange = { version = "0.1.0", path = "./stremio-core-losange" }
 tokio = { version = "1.44.2", features = ["full"] }
-tracing = "0.1.41"
+tracing = "0.1.44"
 tracing-subscriber = "0.3.19"
 url = "2.5.4"
 xml = "0.8.20"
