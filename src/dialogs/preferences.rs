@@ -1,4 +1,6 @@
-use crate::constants::{APP_ID, SUBTITLES_MAX_OFFSET, SUBTITLES_MAX_SIZE, SUBTITLES_MIN_OFFSET, SUBTITLES_MIN_SIZE};
+use crate::constants::{
+    APP_ID, SUBTITLES_MAX_OFFSET, SUBTITLES_MAX_SIZE, SUBTITLES_MIN_OFFSET, SUBTITLES_MIN_SIZE,
+};
 use adw::prelude::*;
 use gtk::gio;
 use relm4::{adw, gtk, Component, ComponentParts, ComponentSender};
