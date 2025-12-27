@@ -26,9 +26,9 @@ jobs:
 
       - name: Install requirements
         run: |
-          sudo sed -i -e 's/noble/plucky/g' /etc/apt/sources.list.d/ubuntu.sources
-          sudo apt-get -y update
-          sudo apt-get -y install build-essential libgtk-4-dev libadwaita-1-dev libmpv-dev
+          echo "deb http://archive.ubuntu.com/ubuntu/ questing main universe" | sudo tee /etc/apt/sources.list.d/questing.list
+          sudo apt-get update
+          sudo apt-get install -y -t questing build-essential libgtk-4-dev libadwaita-1-dev libmpv-dev
           cargo install cargo-deb
           cargo install cargo-generate-rpm
           sudo apt-get -y install flatpak-builder
