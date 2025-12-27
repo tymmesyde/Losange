@@ -67,6 +67,7 @@ impl FactoryComponent for VideoRow {
                         set_ellipsize: gtk::pango::EllipsizeMode::End,
                         set_label: &self.description.no_line_breaks(),
                         set_visible: !self.description.is_empty(),
+                        set_single_line_mode: true,
                     },
                 },
 
