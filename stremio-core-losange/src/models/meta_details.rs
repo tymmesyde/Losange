@@ -127,7 +127,6 @@ pub fn update(meta_details: &MetaDetails, ctx: &Ctx) {
     state.meta_item = meta_item.cloned();
     state.item = item;
     state.videos = videos;
-    state.streams_loading = streams_loading;
     state.streams = streams;
     state.in_library = in_library;
 }

@@ -1,11 +1,15 @@
 mod stream_row;
 mod video_row;
 
+use std::time::Duration;
+
 use adw::prelude::*;
 use itertools::Itertools;
 use relm4::{
-    adw, css, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
-    RelmWidgetExt, SimpleComponent,
+    adw, css,
+    gtk::{self, glib},
+    Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmWidgetExt,
+    Sender, SimpleComponent,
 };
 use rust_i18n::t;
 use stream_row::StreamRow;
@@ -33,6 +37,7 @@ use crate::{
 #[derive(Debug)]
 pub enum SidebarInput {
     Update,
+    Clear,
     OpenAddons,
     SeasonChanged(usize),
     VideoClicked(usize),
@@ -46,9 +51,11 @@ pub struct Sidebar {
     selected_season: usize,
     seasons: Controller<DropDown>,
     videos: Controller<List<VideoRow>>,
+    debounce_videos: Option<glib::JoinHandle<()>>,
     selected_addon: usize,
     addons: Controller<DropDown>,
     streams: Controller<List<StreamRow>>,
+    debounce_streams: Option<glib::JoinHandle<()>>,
     selected_video: Option<Video>,
 }
 
@@ -61,6 +68,9 @@ impl SimpleComponent for Sidebar {
     view! {
         adw::ToolbarView {
             add_css_class: "toolbar",
+
+            connect_map => SidebarInput::Update,
+            connect_unmap => SidebarInput::Clear,
 
             add_top_bar = &adw::HeaderBar {
                 add_css_class: relm4::css::classes::FLAT,
@@ -187,9 +197,11 @@ impl SimpleComponent for Sidebar {
             selected_season: 0,
             seasons,
             videos,
+            debounce_videos: None,
             selected_addon: 0,
             addons,
             streams,
+            debounce_streams: None,
             selected_video: None,
         };
 
@@ -218,7 +230,7 @@ impl SimpleComponent for Sidebar {
 
                 self.seasons.emit(DropDownInput::Update(seasons));
 
-                self.update_videos();
+                self.update_videos(true);
 
                 let addons = state
                     .streams
@@ -228,14 +240,18 @@ impl SimpleComponent for Sidebar {
 
                 self.addons.emit(DropDownInput::Update(addons));
 
-                self.update_streams();
+                self.update_streams(true);
+            }
+            SidebarInput::Clear => {
+                self.videos.emit(ListInput::Clear);
+                self.streams.emit(ListInput::Clear);
             }
             SidebarInput::OpenAddons => {
                 APP_BROKER.send(AppMsg::OpenAddons);
             }
             SidebarInput::SeasonChanged(index) => {
                 self.selected_season = index;
-                self.update_videos();
+                self.update_videos(false);
             }
             SidebarInput::VideoClicked(index) => {
                 let state = META_DETAILS_STATE.read_inner();
@@ -249,7 +265,7 @@ impl SimpleComponent for Sidebar {
             }
             SidebarInput::AddonChanged(index) => {
                 self.selected_addon = index;
-                self.update_streams();
+                self.update_streams(false);
             }
             SidebarInput::StreamClicked(index) => {
                 let state = META_DETAILS_STATE.read_inner();
@@ -279,19 +295,49 @@ impl SimpleComponent for Sidebar {
 }
 
 impl Sidebar {
-    fn update_videos(&mut self) {
+    fn update_videos(&mut self, debounced: bool) {
         let state = META_DETAILS_STATE.read_inner();
 
         if let Some((.., videos)) = state.videos.get(self.selected_season) {
-            self.videos.emit(ListInput::Update(videos.to_owned()));
+            Self::update(
+                videos.to_owned(),
+                self.videos.sender().clone(),
+                &mut self.debounce_videos,
+                debounced,
+            );
         }
     }
 
-    fn update_streams(&mut self) {
+    fn update_streams(&mut self, debounced: bool) {
         let state = META_DETAILS_STATE.read_inner();
 
         if let Some((.., streams)) = state.streams.get(self.selected_addon) {
-            self.streams.emit(ListInput::Update(streams.to_owned()));
+            Self::update(
+                streams.to_owned(),
+                self.streams.sender().clone(),
+                &mut self.debounce_streams,
+                debounced,
+            );
+        }
+    }
+
+    fn update<T: Clone + Send + 'static>(
+        items: Vec<T>,
+        sender: Sender<ListInput<T>>,
+        debouncer: &mut Option<glib::JoinHandle<()>>,
+        debounced: bool,
+    ) {
+        if debounced {
+            if let Some(debounce) = debouncer.take() {
+                debounce.abort();
+            }
+
+            *debouncer = Some(relm4::spawn_local(async move {
+                tokio::time::sleep(Duration::from_millis(250)).await;
+                sender.emit(ListInput::Update(items));
+            }));
+        } else {
+            sender.emit(ListInput::Update(items));
         }
     }
 }

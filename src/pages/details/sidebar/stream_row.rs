@@ -2,21 +2,17 @@ use adw::prelude::*;
 use relm4::{adw, gtk, prelude::FactoryComponent, RelmWidgetExt};
 use stremio_core_losange::{stremio_core::types::resource::StreamSource, types::stream::Stream};
 
-use crate::{
-    common::format::Format,
-    components::list::{ListItemInput, ListItemOutput},
-};
+use crate::{common::format::Format, components::list::ListItemOutput};
 
 pub struct StreamRow {
     pub title: String,
     pub description: String,
     pub external: bool,
-    pub visible: bool,
 }
 
 #[relm4::factory(pub)]
 impl FactoryComponent for StreamRow {
-    type Input = ListItemInput;
+    type Input = ();
     type Output = ListItemOutput;
     type Init = Stream;
     type CommandOutput = ();
@@ -37,9 +33,6 @@ impl FactoryComponent for StreamRow {
             gtk::Box {
                 set_margin_horizontal: 12,
                 set_spacing: 12,
-
-                #[watch]
-                set_visible: self.visible,
 
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
@@ -83,14 +76,6 @@ impl FactoryComponent for StreamRow {
             title: init.name,
             description: init.description,
             external: matches!(init.source, StreamSource::External { .. }),
-            visible: false,
-        }
-    }
-
-    fn update(&mut self, message: Self::Input, _sender: relm4::FactorySender<Self>) {
-        match message {
-            ListItemInput::Show => self.visible = true,
-            ListItemInput::Hide => self.visible = false,
         }
     }
 }

@@ -2,21 +2,17 @@ use adw::prelude::*;
 use relm4::{adw, factory, gtk, prelude::FactoryComponent, RelmWidgetExt};
 use stremio_core_losange::types::video::Video;
 
-use crate::{
-    common::format::Format,
-    components::list::{ListItemInput, ListItemOutput},
-};
+use crate::{common::format::Format, components::list::ListItemOutput};
 
 pub struct VideoRow {
     pub title: String,
     pub description: String,
     pub episode: u32,
-    pub visible: bool,
 }
 
 #[factory(pub)]
 impl FactoryComponent for VideoRow {
-    type Input = ListItemInput;
+    type Input = ();
     type Output = ListItemOutput;
     type Init = Video;
     type CommandOutput = ();
@@ -37,9 +33,6 @@ impl FactoryComponent for VideoRow {
             gtk::Box {
                 set_margin_horizontal: 12,
                 set_spacing: 12,
-
-                #[watch]
-                set_visible: self.visible,
 
                 gtk::Label {
                     set_width_request: 26,
@@ -90,14 +83,6 @@ impl FactoryComponent for VideoRow {
             episode: init
                 .series_info
                 .map_or(0, |series_info| series_info.episode),
-            visible: false,
-        }
-    }
-
-    fn update(&mut self, message: Self::Input, _sender: relm4::FactorySender<Self>) {
-        match message {
-            ListItemInput::Show => self.visible = true,
-            ListItemInput::Hide => self.visible = false,
         }
     }
 }

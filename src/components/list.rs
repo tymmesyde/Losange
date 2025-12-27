@@ -7,13 +7,7 @@ use relm4::{
     ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent,
 };
 
-use crate::common::layout;
-
-#[derive(Debug)]
-pub enum ListItemInput {
-    Show,
-    Hide,
-}
+use crate::components::spinner::Spinner;
 
 #[derive(Debug)]
 pub enum ListItemOutput {
@@ -23,7 +17,7 @@ pub enum ListItemOutput {
 #[derive(Debug)]
 pub enum ListInput<I> {
     Update(Vec<I>),
-    LayoutUpdate,
+    Clear,
 }
 
 #[derive(Debug)]
@@ -36,13 +30,14 @@ where
     C: FactoryComponent<
         Index = DynamicIndex,
         ParentWidget = gtk::ListBox,
-        Input = ListItemInput,
+        Input = (),
         Output = ListItemOutput,
     >,
     C::Init: Debug + Clone,
 {
     scrolled_window: gtk::ScrolledWindow,
     items: FactoryVecDeque<C>,
+    loading: bool,
 }
 
 #[component(pub)]
@@ -51,7 +46,7 @@ where
     C: FactoryComponent<
         Index = DynamicIndex,
         ParentWidget = gtk::ListBox,
-        Input = ListItemInput,
+        Input = (),
         Output = ListItemOutput,
     >,
     C::Init: Debug + Clone,
@@ -62,25 +57,27 @@ where
 
     view! {
         gtk::Box {
-            #[local_ref]
-            scrolled_window -> gtk::ScrolledWindow {
-                set_expand: true,
+            set_expand: true,
 
-                #[wrap(Some)]
-                set_vadjustment = &gtk::Adjustment {
-                    connect_changed => ListInput::LayoutUpdate,
-                    connect_value_changed => ListInput::LayoutUpdate,
-                },
+            #[transition = "Crossfade"]
+            if model.loading {
+                #[template]
+                Spinner {}
+            } else {
+                gtk::Box {
+                    #[local_ref]
+                    scrolled_window -> gtk::ScrolledWindow {
+                        set_expand: true,
 
-                #[local_ref]
-                items -> gtk::ListBox {
-                    add_css_class: relm4::css::classes::BOXED_LIST,
-                    set_valign: gtk::Align::Start,
-                    set_expand: true,
-                    set_selection_mode: gtk::SelectionMode::None,
-
-                    connect_map => ListInput::LayoutUpdate,
-                },
+                        #[local_ref]
+                        items -> gtk::ListBox {
+                            add_css_class: relm4::css::classes::BOXED_LIST,
+                            set_valign: gtk::Align::Start,
+                            set_expand: true,
+                            set_selection_mode: gtk::SelectionMode::None,
+                        }
+                    }
+                }
             }
         }
     }
@@ -101,6 +98,7 @@ where
         let model = Self {
             scrolled_window,
             items,
+            loading: true,
         };
 
         let scrolled_window = &model.scrolled_window;
@@ -114,41 +112,12 @@ where
         match message {
             ListInput::Update(items) => {
                 self.items.guard().clear();
-                for item in items {
-                    self.items.guard().push_back(item);
-                }
-
-                self.update();
+                self.items.extend(items);
+                self.loading = false;
             }
-            ListInput::LayoutUpdate => self.update(),
-        }
-    }
-}
-
-impl<C> List<C>
-where
-    C: FactoryComponent<
-        Index = DynamicIndex,
-        ParentWidget = gtk::ListBox,
-        Input = ListItemInput,
-        Output = ListItemOutput,
-    >,
-    C::Init: Debug + Clone,
-{
-    fn update(&mut self) {
-        let in_view_items = layout::in_view(
-            &self.items,
-            &self.scrolled_window,
-            gtk::Orientation::Vertical,
-        );
-
-        if !in_view_items.is_empty() {
-            for index in 0..self.items.len() {
-                if in_view_items.contains(&index) {
-                    self.items.guard().send(index, ListItemInput::Show);
-                } else {
-                    self.items.guard().send(index, ListItemInput::Hide);
-                }
+            ListInput::Clear => {
+                self.items.guard().clear();
+                self.loading = true;
             }
         }
     }
