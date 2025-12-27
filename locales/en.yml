@@ -2,8 +2,11 @@ menu_login: _Login
 menu_logout: _Logout
 menu_about: _About %{name}
 menu_preferences: _Preferences
+menu_shortcuts: _Shortcuts
 
 preferences: Preferences
+
+shortcut_search: Open Search
 
 appereance: Appearance
 general: General

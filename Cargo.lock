@@ -1838,6 +1838,7 @@ dependencies = [
  "hsl",
  "http-cache-reqwest",
  "itertools 0.14.0",
+ "libadwaita",
  "libc",
  "libloading",
  "libmpv2",

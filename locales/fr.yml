@@ -2,8 +2,11 @@ menu_login: _Connexion
 menu_logout: _Déconnexion
 menu_about: _À propos de %{name}
 menu_preferences: _Préférences
+menu_shortcuts: _Raccourcis
 
 preferences: Préférences
+
+shortcut_search: Ouvir la Recherche
 
 appereance: Apparence
 general: Général

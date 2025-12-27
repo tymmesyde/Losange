@@ -4,7 +4,7 @@ use adw::prelude::*;
 use gtk::{gio, glib};
 use relm4::{
     abstractions::Toaster,
-    actions::{RelmAction, RelmActionGroup},
+    actions::{AccelsPlus, RelmAction, RelmActionGroup},
     adw,
     component::{AsyncComponent, AsyncComponentParts},
     css, gtk,
@@ -24,6 +24,7 @@ use crate::{
         about::AboutDialog,
         login::{LoginDialog, LoginDialogInput},
         preferences::{PreferencesDialog, PreferencesDialogInput},
+        shortcuts::ShortcutsDialog,
     },
     pages::{
         addon::{AddonPage, AddonPageInput},
@@ -35,7 +36,7 @@ use crate::{
         player::{Player, PlayerInput},
         search::{SearchPage, SearchPageInput},
     },
-    server, Args,
+    server, Args, APP_BROKER,
 };
 
 #[derive(Debug)]
@@ -67,13 +68,16 @@ pub struct App {
     login_dialog: Controller<LoginDialog>,
     preferences_dialog: Controller<PreferencesDialog>,
     about_dialog: Controller<AboutDialog>,
+    shortcuts_dialog: Controller<ShortcutsDialog>,
     server_process: Option<Child>,
 }
 
 relm4::new_action_group!(pub(super) WindowActionGroup, "win");
 relm4::new_stateless_action!(pub(super) LoginAction, WindowActionGroup, "login");
 relm4::new_stateless_action!(pub(super) LogoutAction, WindowActionGroup, "logout");
+relm4::new_stateless_action!(pub(super) SearchAction, WindowActionGroup, "search");
 relm4::new_stateless_action!(pub(super) PreferencesAction, WindowActionGroup, "preferences");
+relm4::new_stateless_action!(pub(super) ShortcutsAction, WindowActionGroup, "shortcuts");
 relm4::new_stateless_action!(pub(super) AboutAction, WindowActionGroup, "about");
 
 #[relm4::component(async pub)]
@@ -218,6 +222,7 @@ impl AsyncComponent for App {
         let login_dialog = LoginDialog::builder().launch(()).detach();
         let preferences_dialog = PreferencesDialog::builder().launch(()).detach();
         let about_dialog = AboutDialog::builder().launch(()).detach();
+        let shortcuts_dialog = ShortcutsDialog::builder().launch(()).detach();
 
         let model = App {
             toaster: Toaster::default(),
@@ -235,6 +240,7 @@ impl AsyncComponent for App {
             login_dialog,
             preferences_dialog,
             about_dialog,
+            shortcuts_dialog,
             server_process,
         };
 
@@ -258,10 +264,23 @@ impl AsyncComponent for App {
             })
         };
 
+        let search_action = {
+            RelmAction::<SearchAction>::new_stateless(move |_| {
+                APP_BROKER.send(AppMsg::OpenSearch(None));
+            })
+        };
+
         let preferences_action = {
             let sender = model.preferences_dialog.sender().clone();
             RelmAction::<PreferencesAction>::new_stateless(move |_| {
                 sender.emit(PreferencesDialogInput::Open(None));
+            })
+        };
+
+        let shortcuts_action = {
+            let sender = model.shortcuts_dialog.sender().clone();
+            RelmAction::<ShortcutsAction>::new_stateless(move |_| {
+                sender.emit(());
             })
         };
 
@@ -274,9 +293,15 @@ impl AsyncComponent for App {
 
         actions.add_action(login_action);
         actions.add_action(logout_action);
+        actions.add_action(search_action);
         actions.add_action(preferences_action);
+        actions.add_action(shortcuts_action);
         actions.add_action(about_action);
         actions.register_for_widget(&widgets.main_window);
+
+        let app = relm4::main_application();
+        app.set_accelerators_for_action::<SearchAction>(&["<Control>F"]);
+        app.set_accelerators_for_action::<ShortcutsAction>(&["<Control>question"]);
 
         widgets.load_window_state();
 

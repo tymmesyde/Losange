@@ -5,7 +5,7 @@ use rust_i18n::t;
 use stremio_core_losange::models::ctx::CTX_STATE;
 
 use crate::{
-    app::{AboutAction, AppMsg, LoginAction, LogoutAction, PreferencesAction},
+    app::{AboutAction, AppMsg, LoginAction, LogoutAction, PreferencesAction, ShortcutsAction},
     constants::APP_NAME,
     APP_BROKER,
 };
@@ -32,6 +32,7 @@ impl SimpleComponent for HeaderMenu {
             },
             section! {
                 &t!("menu_preferences") => PreferencesAction,
+                &t!("menu_shortcuts") => ShortcutsAction,
                 &t!("menu_about", name = APP_NAME) => AboutAction,
             },
         }
