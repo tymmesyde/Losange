@@ -28,6 +28,10 @@ impl SimpleComponent for ShortcutsDialog {
             &t!("shortcut_search"),
             "<Control>F",
         ));
+        section.add(adw::ShortcutsItem::new(
+            &t!("shortcut_preferences"),
+            "<Control>comma",
+        ));
 
         widgets.add(section);
 

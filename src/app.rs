@@ -301,6 +301,7 @@ impl AsyncComponent for App {
 
         let app = relm4::main_application();
         app.set_accelerators_for_action::<SearchAction>(&["<Control>F"]);
+        app.set_accelerators_for_action::<PreferencesAction>(&["<Control>comma"]);
         app.set_accelerators_for_action::<ShortcutsAction>(&["<Control>question"]);
 
         widgets.load_window_state();
