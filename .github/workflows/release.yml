@@ -18,14 +18,6 @@ jobs:
       - name: Update git submodules
         run: git submodule update --init --recursive
 
-      - name: Rust setup
-        uses: dtolnay/rust-toolchain@stable
-  
-      - name: Python setup
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
       - name: Install requirements
         run: |
           sudo apt-get update
@@ -39,6 +31,14 @@ jobs:
           sudo flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//25.08
           sudo flatpak install -y org.freedesktop.Platform.ffmpeg-full//24.08
           python3 -m pip install toml aiohttp
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Python setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
 
       - name: Build
         run: cargo build --release
