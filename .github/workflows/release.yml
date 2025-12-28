@@ -22,7 +22,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y \
-            build-essential curl \
+            build-essential curl libssl-dev \
             libgtk-4-dev libadwaita-1-dev libmpv-dev
           cargo install cargo-deb
           cargo install cargo-generate-rpm
