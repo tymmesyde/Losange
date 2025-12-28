@@ -40,6 +40,7 @@ impl SimpleComponent for TracksMenu {
     view! {
         gtk::MenuButton {
             add_css_class: relm4::css::classes::OSD,
+            set_size_request: (45, 45),
             set_icon_name: model.icon,
 
             #[watch]

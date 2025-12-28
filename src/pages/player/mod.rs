@@ -175,6 +175,8 @@ impl SimpleComponent for Player {
                             },
 
                             gtk::Button {
+                                set_size_request: (45, 45),
+
                                 #[watch]
                                 set_icon_name: match state.paused {
                                     true => "media-playback-start-symbolic",
@@ -186,6 +188,8 @@ impl SimpleComponent for Player {
 
                             #[local_ref]
                             volume -> gtk::ScaleButton {
+                                set_size_request: (45, 45),
+
                                 set_icons: &[
                                     "audio-volume-muted",
                                     "audio-volume-high",
@@ -251,6 +255,7 @@ impl SimpleComponent for Player {
 
                             gtk::Button {
                                 set_icon_name: "settings",
+                                set_size_request: (45, 45),
                                 connect_clicked => move |_| {
                                     APP_BROKER.send(AppMsg::OpenPreferences(Some("player")));
                                 },
