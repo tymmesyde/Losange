@@ -20,16 +20,16 @@ jobs:
 
       - name: Install requirements
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libgtk-4-dev libadwaita-1-dev libmpv-dev
+          apt-get update
+          apt-get install -y build-essential libgtk-4-dev libadwaita-1-dev libmpv-dev
           cargo install cargo-deb
           cargo install cargo-generate-rpm
-          sudo apt-get -y install flatpak-builder
-          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y org.gnome.Sdk//49
-          sudo flatpak install -y org.gnome.Platform//49
-          sudo flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//25.08
-          sudo flatpak install -y org.freedesktop.Platform.ffmpeg-full//24.08
+          apt-get -y install flatpak-builder
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y org.gnome.Sdk//49
+          flatpak install -y org.gnome.Platform//49
+          flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//25.08
+          flatpak install -y org.freedesktop.Platform.ffmpeg-full//24.08
           python3 -m pip install toml aiohttp
 
       - name: Rust setup
