@@ -10,6 +10,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:questing
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -26,9 +28,8 @@ jobs:
 
       - name: Install requirements
         run: |
-          echo "deb http://archive.ubuntu.com/ubuntu/ questing main universe" | sudo tee /etc/apt/sources.list.d/questing.list
           sudo apt-get update
-          sudo apt-get install -y -t questing build-essential libgtk-4-dev libadwaita-1-dev libmpv-dev
+          sudo apt-get install -y build-essential libgtk-4-dev libadwaita-1-dev libmpv-dev
           cargo install cargo-deb
           cargo install cargo-generate-rpm
           sudo apt-get -y install flatpak-builder
