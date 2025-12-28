@@ -3,6 +3,7 @@ mod common;
 mod components;
 mod constants;
 mod dialogs;
+mod mpris;
 mod pages;
 mod server;
 

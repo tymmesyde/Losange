@@ -353,6 +353,11 @@ impl SimpleComponent for Player {
 
                 let position = 100.0 - ctx.settings.subtitles_offset as f64;
                 self.video.emit(VideoInput::SubtitlesPosition(position));
+
+                APP_BROKER.sender().emit(AppMsg::MediaMetadata((
+                    player.title.to_owned(),
+                    player.image.to_owned(),
+                )));
             }
             PlayerInput::MouseMove(position) => {
                 if self.mouse_position != position {
@@ -427,6 +432,7 @@ impl SimpleComponent for Player {
             }
             PlayerInput::PauseChanged(paused) => {
                 models::player::update_paused(paused);
+                APP_BROKER.sender().emit(AppMsg::MediaStatus(paused));
             }
             PlayerInput::TimeChanged(time, duration) => {
                 models::player::update_time(time, duration);

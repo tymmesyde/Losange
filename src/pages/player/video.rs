@@ -287,7 +287,9 @@ impl Video {
                         match change {
                             PropertyData::Flag(value) if name == "pause" => {
                                 state.paused = value;
-                                sender.output_sender().emit(VideoOutput::PauseChanged(true));
+                                sender
+                                    .output_sender()
+                                    .emit(VideoOutput::PauseChanged(value));
                             }
                             PropertyData::Double(value) => match name {
                                 "time-pos" => {

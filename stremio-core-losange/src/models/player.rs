@@ -18,6 +18,7 @@ use crate::{
 pub struct PlayerState {
     pub uri: Option<Url>,
     pub title: String,
+    pub image: Option<Url>,
     pub time: f64,
 }
 
@@ -67,6 +68,8 @@ pub fn update(player: &Player, ctx: &Ctx) {
         })
         .unwrap_or_default();
 
+    let image = item.as_ref().and_then(|item| item.image.to_owned());
+
     let time = player
         .library_item
         .as_ref()
@@ -74,6 +77,7 @@ pub fn update(player: &Player, ctx: &Ctx) {
 
     state.uri = uri;
     state.title = title;
+    state.image = image;
     state.time = time;
 }
 

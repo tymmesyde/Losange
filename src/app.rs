@@ -19,13 +19,14 @@ use url::Url;
 
 use crate::{
     components::{header_menu::HeaderMenu, spinner::Spinner},
-    constants::APP_ID,
+    constants::{APP_ID, APP_NAME},
     dialogs::{
         about::AboutDialog,
         login::{LoginDialog, LoginDialogInput},
         preferences::{PreferencesDialog, PreferencesDialogInput},
         shortcuts::ShortcutsDialog,
     },
+    mpris::MPris,
     pages::{
         addon::{AddonPage, AddonPageInput},
         addons::Addons,
@@ -50,6 +51,8 @@ pub enum AppMsg {
     OpenStream(Box<Stream>),
     OpenPreferences(Option<&'static str>),
     NavigateBack,
+    MediaStatus(bool),
+    MediaMetadata((String, Option<Url>)),
 }
 
 pub struct App {
@@ -70,6 +73,7 @@ pub struct App {
     about_dialog: Controller<AboutDialog>,
     shortcuts_dialog: Controller<ShortcutsDialog>,
     server_process: Option<Child>,
+    mpris: MPris,
 }
 
 relm4::new_action_group!(pub(super) WindowActionGroup, "win");
@@ -224,6 +228,18 @@ impl AsyncComponent for App {
         let about_dialog = AboutDialog::builder().launch(()).detach();
         let shortcuts_dialog = ShortcutsDialog::builder().launch(()).detach();
 
+        let mpris = MPris::new(APP_ID, APP_NAME).await;
+        let player_sender = player_page.sender().clone();
+
+        mpris.on_play_pause(move || {
+            player_sender.emit(PlayerInput::PlayPause);
+        });
+
+        mpris.on_raise(move || {
+            let window = &relm4::main_application().windows()[0];
+            window.activate();
+        });
+
         let model = App {
             toaster: Toaster::default(),
             header_menu,
@@ -242,6 +258,7 @@ impl AsyncComponent for App {
             about_dialog,
             shortcuts_dialog,
             server_process,
+            mpris,
         };
 
         let navigation_view = &model.navigation_view;
@@ -357,6 +374,12 @@ impl AsyncComponent for App {
             }
             AppMsg::NavigateBack => {
                 self.navigation_view.pop();
+            }
+            AppMsg::MediaStatus(status) => {
+                self.mpris.set_playback_status(status).await;
+            }
+            AppMsg::MediaMetadata((title, image)) => {
+                self.mpris.set_metadata(title, image).await;
             }
         }
     }
