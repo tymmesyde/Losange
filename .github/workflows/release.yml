@@ -18,10 +18,12 @@ jobs:
       - name: Update git submodules
         run: git submodule update --init --recursive
 
-      - name: Install requirements
+      - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y build-essential libgtk-4-dev libadwaita-1-dev libmpv-dev
+          apt-get install -y \
+            build-essential curl \
+            libgtk-4-dev libadwaita-1-dev libmpv-dev
           cargo install cargo-deb
           cargo install cargo-generate-rpm
           apt-get -y install flatpak-builder
