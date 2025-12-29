@@ -15,16 +15,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          submodules: recursive
 
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y \
-            build-essential curl libssl-dev git \
+            build-essential curl libssl-dev \
             libgtk-4-dev libadwaita-1-dev libmpv-dev
-
-      - name: Update git submodules
-        run: git submodule update --init --recursive
 
       - name: Rust setup
         uses: dtolnay/rust-toolchain@stable
