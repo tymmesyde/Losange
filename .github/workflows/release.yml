@@ -20,7 +20,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y \
-            build-essential curl libssl-dev \
+            build-essential curl libssl-dev git \
             libgtk-4-dev libadwaita-1-dev libmpv-dev
 
       - name: Update git submodules
