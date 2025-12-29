@@ -21,7 +21,8 @@
         "--share=ipc",
         "--share=network",
         "--device=dri",
-        "--filesystem=xdg-data"
+        "--filesystem=xdg-data",
+        "--own-name=org.mpris.MediaPlayer2.Losange"
     ],
     "build-options": {
         "append-path": "/usr/lib/sdk/rust-stable/bin",
