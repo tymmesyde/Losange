@@ -15,8 +15,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-      - name: Update git submodules
-        run: git submodule update --init --recursive
 
       - name: Install dependencies
         run: |
@@ -33,6 +31,9 @@ jobs:
           flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//25.08
           flatpak install -y org.freedesktop.Platform.ffmpeg-full//24.08
           python3 -m pip install toml aiohttp
+
+      - name: Update git submodules
+        run: git submodule update --init --recursive
 
       - name: Rust setup
         uses: dtolnay/rust-toolchain@stable
