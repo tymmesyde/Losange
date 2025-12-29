@@ -22,15 +22,6 @@ jobs:
           apt-get install -y \
             build-essential curl libssl-dev \
             libgtk-4-dev libadwaita-1-dev libmpv-dev
-          cargo install cargo-deb
-          cargo install cargo-generate-rpm
-          apt-get -y install flatpak-builder
-          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install -y org.gnome.Sdk//49
-          flatpak install -y org.gnome.Platform//49
-          flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//25.08
-          flatpak install -y org.freedesktop.Platform.ffmpeg-full//24.08
-          python3 -m pip install toml aiohttp
 
       - name: Update git submodules
         run: git submodule update --init --recursive
@@ -42,6 +33,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
+      - name: Setup cargo
+        run: |
+          cargo install cargo-deb
+          cargo install cargo-generate-rpm
+
+      - name: Setup flatpak
+        run: |
+          apt-get install -y flatpak-builder
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y org.gnome.Sdk//49
+          flatpak install -y org.gnome.Platform//49
+          flatpak install -y org.freedesktop.Sdk.Extension.rust-stable//25.08
+          flatpak install -y org.freedesktop.Platform.ffmpeg-full//24.08
+          python3 -m pip install toml aiohttp
 
       - name: Build
         run: cargo build --release
