@@ -69,89 +69,85 @@ where
                 set_height_request: self.size.0,
                 set_width_request: self.size.1,
 
-                adw::Clamp {
-                    set_maximum_size: self.size.1,
+                gtk::Button {
+                    add_css_class: css::classes::CARD,
+                    set_expand: true,
+                    set_align: gtk::Align::Fill,
+                    set_overflow: gtk::Overflow::Hidden,
 
-                    gtk::Button {
-                        add_css_class: css::classes::CARD,
-                        set_expand: true,
-                        set_align: gtk::Align::Fill,
-                        set_overflow: gtk::Overflow::Hidden,
+                    #[watch]
+                    set_visible: self.visible,
 
-                        #[watch]
-                        set_visible: self.visible,
+                    connect_clicked => ItemBoxInput::Clicked,
 
-                        connect_clicked => ItemBoxInput::Clicked,
+                    add_controller = gtk::EventControllerMotion {
+                        connect_enter[sender] => move |_event, _x, _y| {
+                            sender.input(ItemBoxInput::Hover(true));
+                        },
+                        connect_leave => ItemBoxInput::Hover(false),
+                    },
 
-                        add_controller = gtk::EventControllerMotion {
-                            connect_enter[sender] => move |_event, _x, _y| {
-                                sender.input(ItemBoxInput::Hover(true));
-                            },
-                            connect_leave => ItemBoxInput::Hover(false),
+                    gtk::Overlay {
+                        add_overlay = &gtk::Box {
+                            add_css_class: "new-videos",
+                            set_valign: gtk::Align::Start,
+                            set_halign: gtk::Align::End,
+                            set_margin_all: 8,
+                            set_visible: self.new_videos > 0,
+
+                            gtk::Label {
+                                set_expand: true,
+                                set_label: format!("+{}", self.new_videos).as_str(),
+                            }
                         },
 
-                        gtk::Overlay {
-                            add_overlay = &gtk::Box {
-                                add_css_class: "new-videos",
-                                set_valign: gtk::Align::Start,
-                                set_halign: gtk::Align::End,
-                                set_margin_all: 8,
-                                set_visible: self.new_videos > 0,
+                        add_overlay = &gtk::Revealer {
+                            set_transition_type: gtk::RevealerTransitionType::Crossfade,
+                            #[watch]
+                            set_reveal_child: self.hover,
+
+                            gtk::Box {
+                                add_css_class: css::classes::OSD,
+                                set_expand: true,
+                                set_align: gtk::Align::Fill,
 
                                 gtk::Label {
-                                    set_expand: true,
-                                    set_label: format!("+{}", self.new_videos).as_str(),
+                                    add_css_class: css::classes::TITLE_4,
+                                    set_hexpand: true,
+                                    set_margin_horizontal: 12,
+                                    set_lines: 2,
+                                    set_justify: gtk::Justification::Center,
+                                    set_ellipsize: gtk::pango::EllipsizeMode::End,
+                                    set_label: &self.title,
+
+                                    #[watch]
+                                    set_visible: !self.settings.boolean("content-title-below"),
+                                },
+
+                                gtk::Image {
+                                    set_align: gtk::Align::Center,
+                                    set_hexpand: true,
+                                    set_icon_name: Some("play"),
+                                    set_icon_size: gtk::IconSize::Large,
+
+                                    #[watch]
+                                    set_visible: self.settings.boolean("content-title-below"),
                                 }
-                            },
+                            }
+                        },
 
-                            add_overlay = &gtk::Revealer {
-                                set_transition_type: gtk::RevealerTransitionType::Crossfade,
-                                #[watch]
-                                set_reveal_child: self.hover,
+                        add_overlay = &gtk::ProgressBar {
+                            add_css_class: css::classes::OSD,
+                            set_valign: gtk::Align::End,
+                            set_fraction: self.progress / 100.0,
 
-                                gtk::Box {
-                                    add_css_class: css::classes::OSD,
-                                    set_expand: true,
-                                    set_align: gtk::Align::Fill,
+                            #[watch]
+                            set_visible: self.progress > 0.0,
+                        },
 
-                                    gtk::Label {
-                                        add_css_class: css::classes::TITLE_4,
-                                        set_hexpand: true,
-                                        set_margin_horizontal: 12,
-                                        set_lines: 2,
-                                        set_justify: gtk::Justification::Center,
-                                        set_ellipsize: gtk::pango::EllipsizeMode::End,
-                                        set_label: &self.title,
-
-                                        #[watch]
-                                        set_visible: !self.settings.boolean("content-title-below"),
-                                    },
-
-                                    gtk::Image {
-                                        set_align: gtk::Align::Center,
-                                        set_hexpand: true,
-                                        set_icon_name: Some("play"),
-                                        set_icon_size: gtk::IconSize::Large,
-
-                                        #[watch]
-                                        set_visible: self.settings.boolean("content-title-below"),
-                                    }
-                                }
-                            },
-
-                            add_overlay = &gtk::ProgressBar {
-                                add_css_class: css::classes::OSD,
-                                set_valign: gtk::Align::End,
-                                set_fraction: self.progress / 100.0,
-
-                                #[watch]
-                                set_visible: self.progress > 0.0,
-                            },
-
-                            self.image.widget(),
-                        }
-                    },
-                }
+                        self.image.widget(),
+                    }
+                },
             },
 
             adw::Clamp {
