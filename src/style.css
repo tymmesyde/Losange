@@ -23,6 +23,10 @@ dropdown.flat > button:active {
     background-color: color-mix(in srgb, currentColor 16%, transparent);
 }
 
+flowboxchild {
+    background-color: transparent;
+}
+
 .small-icon {
     border-radius: 6px;
 }
