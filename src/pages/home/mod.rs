@@ -92,9 +92,10 @@ impl SimpleComponent for HomePage {
             }
             HomePageInput::Update => {
                 let state = HOME_STATE.read_inner();
+                let mut catalogs = self.catalogs.guard();
 
                 for (i, catalog) in state.catalogs.iter().enumerate() {
-                    if let Some(catalog_row) = self.catalogs.get(i) {
+                    if let Some(catalog_row) = catalogs.get(i) {
                         if catalog.items.len() != catalog_row.items.len()
                             || catalog.items.iter().zip(catalog_row.items.iter()).any(
                                 |(state_item, row_item)| {
@@ -105,16 +106,16 @@ impl SimpleComponent for HomePage {
                                 },
                             )
                         {
-                            self.catalogs.guard().remove(i);
-                            self.catalogs.guard().insert(i, catalog.to_owned());
+                            catalogs.remove(i);
+                            catalogs.insert(i, catalog.to_owned());
                         }
                     } else {
-                        self.catalogs.guard().insert(i, catalog.to_owned());
+                        catalogs.insert(i, catalog.to_owned());
                     }
                 }
 
-                while self.catalogs.len() > state.catalogs.len() {
-                    self.catalogs.guard().pop_back();
+                while catalogs.len() > state.catalogs.len() {
+                    catalogs.pop_back();
                 }
             }
             HomePageInput::LayoutUpdate => {
