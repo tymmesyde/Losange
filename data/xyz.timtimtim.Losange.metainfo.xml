@@ -39,6 +39,11 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.7.1" date="2026-01-03">
+            <description>
+                <p>Fix progress not updating on Continue Watching items</p>
+            </description>
+        </release>
         <release version="0.7.0" date="2025-12-29">
             <description>
                 <p>Add MPRIS support</p>

@@ -1,5 +1,5 @@
 Name:           Losange
-Version:        0.7.0
+Version:        0.7.1
 Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
@@ -40,6 +40,9 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
+* Sat Jan 3 2026 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.7.1-1
+- Fix progress not updating on Continue Watching items
+
 * Mon Dec 29 2025 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.7.0-1
 - Add MPRIS support
 - Add shortcuts to open Search and Preferences
