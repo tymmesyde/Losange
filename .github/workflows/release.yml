@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ubuntu:questing
+      options: --privileged
     steps:
       - name: Install dependencies
         run: |
