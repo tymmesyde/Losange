@@ -407,9 +407,7 @@ impl AsyncComponent for DetailsPage {
 impl DetailsPage {
     fn populate_tags(factory: &mut FactoryVecDeque<Tag>, tags: &Vec<String>) {
         factory.guard().clear();
-        for tag in tags {
-            factory.guard().push_back(tag.to_owned());
-        }
+        factory.extend(tags.to_owned());
     }
 
     async fn update_colors(source: Option<Url>, dark_theme: bool) -> anyhow::Result<Vec<String>> {

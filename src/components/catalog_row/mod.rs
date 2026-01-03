@@ -206,9 +206,7 @@ impl FactoryComponent for CatalogRow {
             .launch(gtk::Box::default())
             .detach();
 
-        for item in init.items {
-            items.guard().push_back(item.to_owned());
-        }
+        items.extend(init.items);
 
         Self {
             settings,

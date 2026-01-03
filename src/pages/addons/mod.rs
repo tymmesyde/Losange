@@ -218,9 +218,8 @@ impl AsyncComponent for Addons {
             }
             AddonsInput::LoadOfficial => {
                 self.official_list.guard().clear();
-                for addon in OFFICIAL_ADDONS.iter() {
-                    self.official_list.guard().push_back(Addon::from(addon));
-                }
+                self.official_list
+                    .extend(OFFICIAL_ADDONS.iter().map(Addon::from));
             }
             AddonsInput::LoadCommunity => {
                 models::remote_addons::load(COMMUNITY_MANIFESTS[0]);
@@ -229,17 +228,13 @@ impl AsyncComponent for Addons {
                 let state = INSTALLED_ADDONS_STATE.read_inner();
 
                 self.installed_list.guard().clear();
-                for addon in &state.addons {
-                    self.installed_list.guard().push_back(addon.to_owned());
-                }
+                self.installed_list.extend(state.addons.to_owned());
             }
             AddonsInput::UpdateCommunity => {
                 let state = REMOTE_ADDONS_STATE.read_inner();
 
                 self.community_list.guard().clear();
-                for addon in &state.addons {
-                    self.community_list.guard().push_back(addon.to_owned());
-                }
+                self.community_list.extend(state.addons.to_owned());
             }
             AddonsInput::InstalledAddonClicked(index) => {
                 let state = INSTALLED_ADDONS_STATE.read_inner();
