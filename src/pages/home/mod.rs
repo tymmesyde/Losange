@@ -88,13 +88,23 @@ impl SimpleComponent for HomePage {
         match msg {
             HomePageInput::Load => {
                 models::home::load();
+                models::ctx::sync_with_api();
             }
             HomePageInput::Update => {
                 let state = HOME_STATE.read_inner();
 
                 for (i, catalog) in state.catalogs.iter().enumerate() {
                     if let Some(catalog_row) = self.catalogs.get(i) {
-                        if catalog.items.len() != catalog_row.items.len() {
+                        if catalog.items.len() != catalog_row.items.len()
+                            || catalog.items.iter().zip(catalog_row.items.iter()).any(
+                                |(state_item, row_item)| {
+                                    state_item.id != row_item.id
+                                        || state_item.progress != row_item.progress
+                                        || state_item.new_videos != row_item.new_videos
+                                        || state_item.last_stream != row_item.last_stream
+                                },
+                            )
+                        {
                             self.catalogs.guard().remove(i);
                             self.catalogs.guard().insert(i, catalog.to_owned());
                         }
