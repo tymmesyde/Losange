@@ -19,7 +19,7 @@ pub async fn initialize(data_location: &Path) -> anyhow::Result<Child> {
     if should_download {
         let download_url = Url::parse(
             SERVER_DOWNLOAD_ENDPOINT
-                .replace("VERSION", &SERVER_VERSION)
+                .replace("VERSION", SERVER_VERSION)
                 .as_str(),
         )?;
 
@@ -30,7 +30,7 @@ pub async fn initialize(data_location: &Path) -> anyhow::Result<Child> {
             .context("Failed to fetch server file")?;
 
         fs::write(&file_path, latest_file).context("Failed to write server file")?;
-        fs::write(&version_path, &SERVER_VERSION).context("Failed to write version file")?;
+        fs::write(&version_path, SERVER_VERSION).context("Failed to write version file")?;
     }
 
     let process = Command::new("node")
