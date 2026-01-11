@@ -61,20 +61,6 @@ flowboxchild {
     background-color: @accent_bg_color;
 }
 
-.catalog-button {
-    border-radius: 100%;
-    color: @window_fg_color;
-    background-color: color-mix(in srgb, @window_bg_color 85%, @window_fg_color);
-}
-
-.catalog-button:hover {
-    background-image: image(color-mix(in srgb, currentColor 10%, transparent));
-}
-
-.catalog-button:active {
-    background-image: image(RGB(0 0 6 / 20%));
-}
-
 .sidebar-pane {
     background-color: rgba(0, 0, 0, 0.1);
     border-right: none;

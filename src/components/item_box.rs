@@ -59,6 +59,8 @@ where
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
+            set_halign: gtk::Align::Center,
+            set_expand: false,
             set_width_request: self.size.1,
             set_spacing: 12,
 

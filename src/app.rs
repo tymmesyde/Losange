@@ -182,7 +182,7 @@ impl AsyncComponent for App {
         view! {
             #[local_ref]
             root {
-                set_default_size: (1200, 750),
+                set_default_size: (1210, 750),
 
                 #[name = "toolbar_view"]
                 adw::ToolbarView {
