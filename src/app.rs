@@ -439,6 +439,7 @@ impl App {
     }
 
     fn navigate_tab(&self, name: &str) {
+        self.navigation_view.pop_to_tag("main");
         self.view_stack.set_visible_child_name(name);
     }
 }
