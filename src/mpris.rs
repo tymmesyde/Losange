@@ -1,5 +1,5 @@
-use libadwaita::glib;
 use mpris_server::{Metadata, PlaybackStatus, Player};
+use relm4::gtk::glib;
 use tracing::error;
 use url::Url;
 

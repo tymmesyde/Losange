@@ -122,6 +122,7 @@ impl AsyncComponent for Image {
 }
 
 impl Image {
+    #[allow(deprecated)]
     async fn load(source: Option<Url>, size: (i32, i32)) -> anyhow::Result<gdk::Texture> {
         if let Some(uri) = source {
             let response = fetch(uri).await?;

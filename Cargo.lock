@@ -2035,7 +2035,6 @@ dependencies = [
  "hsl",
  "http-cache-reqwest",
  "itertools 0.14.0",
- "libadwaita",
  "libc",
  "libloading",
  "libmpv2",
@@ -2813,8 +2812,8 @@ checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
 
 [[package]]
 name = "relm4"
-version = "0.10.0"
-source = "git+https://github.com/Relm4/Relm4#4f992cea28839d865dc67c911f022e2b36a5ea83"
+version = "0.10.1"
+source = "git+https://github.com/Relm4/Relm4#1c12c7f37b00249f7b04b6400732a5cf26de6443"
 dependencies = [
  "flume",
  "fragile",
@@ -2830,8 +2829,8 @@ dependencies = [
 
 [[package]]
 name = "relm4-css"
-version = "0.10.0"
-source = "git+https://github.com/Relm4/Relm4#4f992cea28839d865dc67c911f022e2b36a5ea83"
+version = "0.10.1"
+source = "git+https://github.com/Relm4/Relm4#1c12c7f37b00249f7b04b6400732a5cf26de6443"
 
 [[package]]
 name = "relm4-icons"
@@ -2850,14 +2849,14 @@ checksum = "75f2de558afdd570680a69c96dc9f812b241922c6355dae351f7ffbb5fac675d"
 dependencies = [
  "gvdb",
  "serde",
- "toml 0.9.10+spec-1.1.0",
+ "toml 0.9.11+spec-1.1.0",
  "walkdir",
 ]
 
 [[package]]
 name = "relm4-macros"
-version = "0.10.0"
-source = "git+https://github.com/Relm4/Relm4#4f992cea28839d865dc67c911f022e2b36a5ea83"
+version = "0.10.1"
+source = "git+https://github.com/Relm4/Relm4#1c12c7f37b00249f7b04b6400732a5cf26de6443"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3697,7 +3696,7 @@ dependencies = [
  "cfg-expr",
  "heck",
  "pkg-config",
- "toml 0.9.10+spec-1.1.0",
+ "toml 0.9.11+spec-1.1.0",
  "version-compare",
 ]
 
@@ -3922,9 +3921,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.9.10+spec-1.1.0"
+version = "0.9.11+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0825052159284a1a8b4d6c0c86cbc801f2da5afd2b225fa548c72f2e74002f48"
+checksum = "f3afc9a848309fe1aaffaed6e1546a7a14de1f935dc9d89d32afd9a44bab7c46"
 dependencies = [
  "indexmap 2.12.1",
  "serde_core",

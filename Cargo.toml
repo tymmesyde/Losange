@@ -22,13 +22,12 @@ epoxy = "0.1.0"
 hsl = "0.1.1"
 http-cache-reqwest = "0.15.1"
 itertools = "0.14.0"
-libadwaita = { version = "0.8.1", features = ["v1_8"] }
 libc = "0.2.178"
 libloading = "0.9.0"
 libmpv2 = "5.0.2"
 mpris-server = "0.9.0"
 open = "5.3.3"
-relm4 = { git = "https://github.com/Relm4/Relm4", features = ["libadwaita", "gnome_48"] }
+relm4 = { git = "https://github.com/Relm4/Relm4", features = ["libadwaita", "gnome_49"] }
 relm4-icons = "0.10.0"
 reqwest = { version = "0.12.28", features = ["rustls-tls", "http2", "json"] }
 reqwest-middleware = "0.4.2"
