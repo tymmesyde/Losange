@@ -2,7 +2,10 @@ use itertools::Itertools;
 use stremio_core::{
     constants::OFFICIAL_ADDONS,
     models::common::ResourceLoadable,
-    types::{addon::Descriptor, resource::MetaItemPreview},
+    types::{
+        addon::{Descriptor, ResourceRequest},
+        resource::MetaItemPreview,
+    },
 };
 use url::Url;
 
@@ -12,6 +15,7 @@ const STREMIO_LOGO: &str = "https://stremio.com/website/stremio-logo-small.png";
 
 #[derive(Debug, Clone, Default)]
 pub struct Catalog {
+    pub request: Option<ResourceRequest>,
     pub icon: Option<Url>,
     pub addon_name: Option<String>,
     pub name: Option<String>,
@@ -49,6 +53,7 @@ impl Catalog {
             .or(addon.map(|descriptor| descriptor.manifest.name.to_owned()));
 
         Self {
+            request: Some(resource.request.clone()),
             icon: logo,
             addon_name,
             name,

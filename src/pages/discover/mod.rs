@@ -5,7 +5,10 @@ use relm4::{
     ComponentSender, Controller, RelmWidgetExt, SimpleComponent,
 };
 use rust_i18n::t;
-use stremio_core_losange::models::{self, discover::DISCOVER_STATE};
+use stremio_core_losange::{
+    models::{self, discover::DISCOVER_STATE},
+    stremio_core::types::addon::ResourceRequest,
+};
 
 use crate::{
     common::{layout, translate},
@@ -18,7 +21,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum DiscoverPageInput {
-    Load,
+    Load(Option<ResourceRequest>),
     Update,
     LayoutUpdate,
     TypeChanged(usize),
@@ -44,7 +47,7 @@ impl SimpleComponent for DiscoverPage {
         adw::NavigationPage {
             set_title: "Discover",
             set_tag: Some("discover"),
-            connect_realize => DiscoverPageInput::Load,
+            connect_realize => DiscoverPageInput::Load(None),
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
@@ -148,8 +151,8 @@ impl SimpleComponent for DiscoverPage {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            DiscoverPageInput::Load => {
-                models::discover::load(None);
+            DiscoverPageInput::Load(request) => {
+                models::discover::load(request);
             }
             DiscoverPageInput::Update => {
                 let state = DISCOVER_STATE.read_inner();
@@ -162,6 +165,15 @@ impl SimpleComponent for DiscoverPage {
 
                 self.types.emit(DropDownInput::Update(types));
 
+                let selected_type = state
+                    .types
+                    .iter()
+                    .position(|selectable| selectable.selected);
+
+                if let Some(index) = selected_type {
+                    self.types.emit(DropDownInput::Select(index));
+                }
+
                 let catalogs = state
                     .catalogs
                     .iter()
@@ -169,6 +181,15 @@ impl SimpleComponent for DiscoverPage {
                     .collect_vec();
 
                 self.catalogs.emit(DropDownInput::Update(catalogs));
+
+                let selected_catalog = state
+                    .catalogs
+                    .iter()
+                    .position(|selectable| selectable.selected);
+
+                if let Some(index) = selected_catalog {
+                    self.catalogs.emit(DropDownInput::Select(index));
+                }
 
                 let genres = state
                     .genres

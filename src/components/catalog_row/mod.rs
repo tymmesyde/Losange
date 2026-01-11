@@ -8,12 +8,15 @@ use relm4::factory::{FactoryVecDeque, FactoryView};
 use relm4::{css, prelude::*};
 use relm4::{gtk, FactorySender};
 use rust_i18n::t;
+use stremio_core_losange::stremio_core::types::addon::ResourceRequest;
 use stremio_core_losange::types::catalog::Catalog;
 
+use crate::app::AppMsg;
 use crate::common::layout::{self, ScrollPosition};
 use crate::components::image::{init::ImageInit, Image};
 use crate::components::item_box::{ItemBox, ItemBoxInput};
 use crate::constants::{APP_ID, CATALOG_ICON_SIZE, ITEM_MAX_SIZE, ITEM_MIN_SIZE};
+use crate::APP_BROKER;
 
 pub type CatalogRowInit = Catalog;
 
@@ -25,6 +28,7 @@ pub enum CatalogRowInput {
     Hover(bool),
     ScrollLeft,
     ScrollRight,
+    ShowAllClicked,
 }
 
 pub struct CatalogRow {
@@ -33,6 +37,7 @@ pub struct CatalogRow {
     hover: bool,
     visible: bool,
     size: i32,
+    request: Option<ResourceRequest>,
     icon: AsyncController<Image>,
     r#type: Option<String>,
     addon_name: Option<String>,
@@ -60,46 +65,70 @@ impl FactoryComponent for CatalogRow {
 
             gtk::Box {
                 set_margin_horizontal: 16,
-                set_spacing: 12,
 
                 gtk::Box {
-                    set_spacing: 8,
+                    set_hexpand: true,
+                    set_spacing: 12,
 
                     gtk::Box {
-                        add_css_class: "small-icon",
-                        set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::Center,
-                        set_expand: false,
-                        set_overflow: gtk::Overflow::Hidden,
+                        set_spacing: 8,
 
-                        #[watch]
-                        set_visible: self.settings.boolean("catalog-addon-icon"),
+                        gtk::Box {
+                            add_css_class: "small-icon",
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+                            set_expand: false,
+                            set_overflow: gtk::Overflow::Hidden,
 
-                        self.icon.widget(),
+                            #[watch]
+                            set_visible: self.settings.boolean("catalog-addon-icon"),
+
+                            self.icon.widget(),
+                        },
+
+                        gtk::Label {
+                            set_css_classes: &[css::classes::TITLE_4, css::classes::DIM_LABEL],
+                            set_valign: gtk::Align::Center,
+                            set_label: self.addon_name.as_deref().unwrap_or_default(),
+
+                            #[watch]
+                            set_visible: self.addon_name.is_some() && self.settings.boolean("catalog-addon-name"),
+                        },
+
+                        gtk::Label {
+                            add_css_class: css::classes::TITLE_4,
+                            set_valign: gtk::Align::Center,
+                            set_label: self.name.as_ref().unwrap_or(&t!("continue_watching").to_string()),
+                        }
                     },
 
-                    gtk::Label {
-                        set_css_classes: &[css::classes::TITLE_4, css::classes::DIM_LABEL],
+                    gtk::Button {
+                        add_css_class: "small-tag",
                         set_valign: gtk::Align::Center,
-                        set_label: self.addon_name.as_deref().unwrap_or_default(),
-
-                        #[watch]
-                        set_visible: self.addon_name.is_some() && self.settings.boolean("catalog-addon-name"),
-                    },
-
-                    gtk::Label {
-                        add_css_class: css::classes::TITLE_4,
-                        set_valign: gtk::Align::Center,
-                        set_label: self.name.as_ref().unwrap_or(&t!("continue_watching").to_string()),
+                        set_margin_top: 1,
+                        set_visible: self.r#type.is_some(),
+                        set_label: &t!(self.r#type.as_deref().unwrap_or_default()),
                     }
                 },
 
                 gtk::Button {
-                    add_css_class: "small-tag",
-                    set_valign: gtk::Align::Center,
-                    set_margin_top: 1,
-                    set_visible: self.r#type.is_some(),
-                    set_label: &t!(self.r#type.as_deref().unwrap_or_default()),
+                    add_css_class: css::classes::FLAT,
+                    connect_clicked => CatalogRowInput::ShowAllClicked,
+
+                    #[watch]
+                    set_visible: self.request.is_some(),
+
+                    gtk::Box {
+                        set_spacing: 6,
+
+                        gtk::Label {
+                            set_label: &t!("see_all"),
+                        },
+
+                        gtk::Image {
+                            set_icon_name: Some("right"),
+                        }
+                    }
                 }
             },
 
@@ -215,6 +244,7 @@ impl FactoryComponent for CatalogRow {
             visible: true,
             size,
             icon,
+            request: init.request,
             r#type: init.r#type,
             addon_name: init.addon_name,
             name: init.name,
@@ -279,6 +309,9 @@ impl FactoryComponent for CatalogRow {
             CatalogRowInput::ScrollRight => {
                 self.scrolled_window
                     .emit_by_name::<bool>("scroll-child", &[&gtk::ScrollType::StepForward, &true]);
+            }
+            CatalogRowInput::ShowAllClicked => {
+                APP_BROKER.send(AppMsg::OpenDiscover(self.request.clone()))
             }
         }
     }

@@ -5,6 +5,7 @@ use relm4::{adw, gtk, ComponentParts, ComponentSender, SimpleComponent};
 #[derive(Debug)]
 pub enum DropDownInput {
     Update(Vec<String>),
+    Select(usize),
     Selected(usize),
 }
 
@@ -72,6 +73,9 @@ impl SimpleComponent for DropDown {
                         .collect_vec()
                         .as_slice(),
                 );
+            }
+            DropDownInput::Select(index) => {
+                self.selected = index as u32;
             }
             DropDownInput::Selected(index) => {
                 self.selected = index as u32;

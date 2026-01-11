@@ -14,7 +14,9 @@ use relm4::{
 };
 use rust_i18n::t;
 use shellexpand::tilde;
-use stremio_core_losange::{core, models, types::stream::Stream};
+use stremio_core_losange::{
+    core, models, stremio_core::types::addon::ResourceRequest, types::stream::Stream,
+};
 use url::Url;
 
 use crate::{
@@ -31,7 +33,7 @@ use crate::{
         addon::{AddonPage, AddonPageInput},
         addons::Addons,
         details::{DetailsPage, DetailsPageInput},
-        discover::DiscoverPage,
+        discover::{DiscoverPage, DiscoverPageInput},
         home::HomePage,
         library::LibraryPage,
         player::{Player, PlayerInput},
@@ -45,6 +47,7 @@ pub enum AppMsg {
     Toast(String),
     OpenHome,
     OpenSearch(Option<String>),
+    OpenDiscover(Option<ResourceRequest>),
     OpenDetails((String, String)),
     OpenAddons,
     OpenAddon(Url),
@@ -353,6 +356,10 @@ impl AsyncComponent for App {
 
                 self.navigate("search");
             }
+            AppMsg::OpenDiscover(request) => {
+                self.navigate_tab("discover");
+                self.discover_page.emit(DiscoverPageInput::Load(request));
+            }
             AppMsg::OpenDetails(item) => {
                 self.details_page.emit(DetailsPageInput::Load(item));
                 self.navigate("details");
@@ -429,6 +436,10 @@ impl App {
                 self.navigation_view.push_by_tag(tag)
             }
         }
+    }
+
+    fn navigate_tab(&self, name: &str) {
+        self.view_stack.set_visible_child_name(name);
     }
 }
 

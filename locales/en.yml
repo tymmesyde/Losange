@@ -77,6 +77,8 @@ alternative: Alternative
 
 continue_watching: Continue watching
 
+see_all: See all
+
 season: Season %{n}
 special_season: Special
 
