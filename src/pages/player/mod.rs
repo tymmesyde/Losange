@@ -345,7 +345,6 @@ impl SimpleComponent for Player {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             PlayerInput::Load(stream) => {
-                println!("{:?}", stream);
                 models::player::load(*stream);
             }
             PlayerInput::Unload => {
