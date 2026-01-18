@@ -6,8 +6,7 @@ use std::time::Duration;
 use adw::prelude::*;
 use gtk::glib;
 use relm4::{
-    adw, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
-    JoinHandle, RelmWidgetExt, SimpleComponent,
+    Component, ComponentController, ComponentParts, ComponentSender, Controller, JoinHandle, RelmWidgetExt, SimpleComponent, actions::{AccelsPlus, RelmAction, RelmActionGroup}, adw, gtk
 };
 use rust_i18n::t;
 use stremio_core_losange::{
@@ -19,6 +18,11 @@ use tracks_menu::{TracksMenu, TracksMenuInput, TracksMenuOutput};
 use video::{Video, VideoInput, VideoOutput, VIDEO_STATE};
 
 use crate::{app::AppMsg, components::spinner::Spinner, APP_BROKER};
+
+relm4::new_action_group!(pub(super) PlayerActionGroup, "player");
+relm4::new_stateless_action!(pub(super) PlayPauseAction, PlayerActionGroup, "play_pause");
+relm4::new_stateless_action!(pub(super) SeekPrevAction, PlayerActionGroup, "seek_prev");
+relm4::new_stateless_action!(pub(super) SeekNextAction, PlayerActionGroup, "seek_next");
 
 #[derive(Debug)]
 pub enum PlayerInput {
@@ -75,29 +79,6 @@ impl SimpleComponent for Player {
             add_controller = gtk::EventControllerMotion {
                 connect_motion[sender] => move |_, x, y| {
                     sender.input_sender().emit(PlayerInput::MouseMove((x, y)));
-                },
-            },
-
-            add_controller = gtk::EventControllerKey {
-                connect_key_pressed[sender] => move |_, key, _, _| {
-                    match key.name() {
-                        Some(name) => match name.as_ref() {
-                            "space" => {
-                                sender.input_sender().emit(PlayerInput::PlayPause);
-                                glib::Propagation::Stop
-                            },
-                            "Left" => {
-                                sender.input_sender().emit(PlayerInput::SeekPrev);
-                                glib::Propagation::Stop
-                            },
-                            "Right" => {
-                                sender.input_sender().emit(PlayerInput::SeekNext);
-                                glib::Propagation::Stop
-                            },
-                            _ => glib::Propagation::Proceed
-                        }
-                        None => glib::Propagation::Proceed,
-                    }
                 },
             },
 
@@ -333,6 +314,41 @@ impl SimpleComponent for Player {
         };
 
         let widgets = view_output!();
+
+        let play_pause_action = {
+            let sender = sender.input_sender().clone();
+            RelmAction::<PlayPauseAction>::new_stateless(move |_| {
+                sender.emit(PlayerInput::PlayPause);
+            })
+        };
+
+        let seek_prev_action = {
+            let sender = sender.input_sender().clone();
+            RelmAction::<SeekPrevAction>::new_stateless(move |_| {
+                sender.emit(PlayerInput::SeekPrev);
+            })
+        };
+
+        let seek_next_action = {
+            let sender = sender.input_sender().clone();
+            RelmAction::<SeekNextAction>::new_stateless(move |_| {
+                sender.emit(PlayerInput::SeekNext);
+            })
+        };
+
+        let mut actions = RelmActionGroup::<PlayerActionGroup>::new();
+        actions.add_action(play_pause_action);
+        actions.add_action(seek_prev_action);
+        actions.add_action(seek_next_action);
+
+        if let Some(window) = relm4::main_application().active_window() {
+            actions.register_for_widget(window);
+        }
+
+        let app = relm4::main_application();
+        app.set_accelerators_for_action::<PlayPauseAction>(&["space"]);
+        app.set_accelerators_for_action::<SeekPrevAction>(&["Left"]);
+        app.set_accelerators_for_action::<SeekNextAction>(&["Right"]);
 
         ComponentParts { model, widgets }
     }

@@ -23,17 +23,29 @@ impl SimpleComponent for ShortcutsDialog {
         let model = Self {};
         let widgets = root.clone();
 
-        let section = adw::ShortcutsSection::new(None);
-        section.add(adw::ShortcutsItem::new(
+        let general_section = adw::ShortcutsSection::new(Some(&t!("general")));
+        general_section.add(adw::ShortcutsItem::new(
             &t!("shortcut_search"),
             "<Control>F",
         ));
-        section.add(adw::ShortcutsItem::new(
+        general_section.add(adw::ShortcutsItem::new(
             &t!("shortcut_preferences"),
             "<Control>comma",
         ));
 
-        widgets.add(section);
+        let player_section = adw::ShortcutsSection::new(Some(&t!("player")));
+        player_section.add(adw::ShortcutsItem::new(&t!("shortcut_play_pause"), "space"));
+        player_section.add(adw::ShortcutsItem::new(
+            &t!("shortcut_seek_backward"),
+            "Left",
+        ));
+        player_section.add(adw::ShortcutsItem::new(
+            &t!("shortcut_seek_forward"),
+            "Right",
+        ));
+
+        widgets.add(general_section);
+        widgets.add(player_section);
 
         ComponentParts { model, widgets }
     }
