@@ -265,6 +265,7 @@ impl Video {
         mpv.disable_deprecated_events().ok();
 
         mpv.observe_property("pause", Format::Flag, 0).ok();
+        mpv.observe_property("seeking", Format::Flag, 0).ok();
         mpv.observe_property("time-pos", Format::Double, 0).ok();
         mpv.observe_property("duration", Format::Double, 0).ok();
         mpv.observe_property("volume", Format::Double, 0).ok();
@@ -290,6 +291,9 @@ impl Video {
                                 sender
                                     .output_sender()
                                     .emit(VideoOutput::PauseChanged(value));
+                            }
+                            PropertyData::Flag(value) if name == "seeking" => {
+                                state.buffering = value;
                             }
                             PropertyData::Double(value) => match name {
                                 "time-pos" => {
