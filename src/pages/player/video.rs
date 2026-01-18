@@ -12,6 +12,8 @@ use relm4::{gtk, ComponentParts, ComponentSender, RelmWidgetExt, SharedState, Si
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
+use crate::common::language::Language;
+
 fn get_proc_address(_context: &GLContext, name: &str) -> *mut c_void {
     epoxy::get_proc_addr(name) as _
 }
@@ -22,6 +24,7 @@ const SECOND: f64 = 1000.0;
 struct Track {
     id: i64,
     r#type: String,
+    title: Option<String>,
     lang: Option<String>,
     selected: bool,
 }
@@ -30,7 +33,7 @@ struct Track {
 pub struct MediaTrack {
     pub id: i64,
     pub lang: String,
-    pub label: Option<String>,
+    pub label: String,
     pub active: bool,
 }
 
@@ -342,17 +345,28 @@ impl Video {
             list.iter()
                 .filter(|track| track.r#type == r#type)
                 .map(|track| {
-                    let label = track.lang.as_ref().and_then(|lang| {
-                        rust_iso639::from_code_1(lang)
-                            .or(rust_iso639::from_code_2t(lang))
-                            .or(rust_iso639::from_code_2b(lang))
-                            .map(|code| code.name.to_string())
-                    });
+                    let language = track
+                        .lang
+                        .as_ref()
+                        .and_then(|lang| Language::try_from(lang.clone()).ok());
+
+                    let locale = language.as_ref().map(|language| language.name);
+                    let code = language
+                        .as_ref()
+                        .map(|language| language.code)
+                        .unwrap_or("und");
+
+                    let label = match (locale, &track.title) {
+                        (Some(locale), Some(title)) => format!("{} - {}", locale, title),
+                        (Some(locale), None) => locale.to_owned(),
+                        (None, Some(title)) => title.to_owned(),
+                        _ => "Unknown".to_owned(),
+                    };
 
                     MediaTrack {
                         id: track.id,
+                        lang: code.to_string(),
                         label,
-                        lang: track.lang.to_owned().unwrap_or("und".to_owned()),
                         active: track.selected,
                     }
                 })

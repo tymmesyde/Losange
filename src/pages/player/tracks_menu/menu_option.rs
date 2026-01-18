@@ -1,11 +1,10 @@
 use gtk::prelude::*;
 use relm4::factory::{DynamicIndex, FactoryComponent, FactorySender};
 use relm4::{gtk, RelmWidgetExt};
-use rust_i18n::t;
 
 pub struct MenuOptionInit {
     pub id: i64,
-    pub label: Option<String>,
+    pub label: String,
     pub active: bool,
     pub group: gtk::CheckButton,
 }
@@ -22,7 +21,7 @@ pub enum MenuOptionOutput {
 
 pub struct MenuOption {
     pub id: i64,
-    label: Option<String>,
+    label: String,
     active: bool,
     group: gtk::CheckButton,
 }
@@ -39,7 +38,7 @@ impl FactoryComponent for MenuOption {
         gtk::ListBoxRow {
             gtk::CheckButton {
                 set_margin_all: 4,
-                set_label: Some(self.label.as_ref().map_or(&t!("original"), |label| label)),
+                set_label: Some(&self.label),
                 set_active: self.active,
                 set_group: Some(&self.group),
                 connect_toggled[sender] => move |button| {

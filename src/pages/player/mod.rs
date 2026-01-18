@@ -6,7 +6,9 @@ use std::time::Duration;
 use adw::prelude::*;
 use gtk::glib;
 use relm4::{
-    Component, ComponentController, ComponentParts, ComponentSender, Controller, JoinHandle, RelmWidgetExt, SimpleComponent, actions::{AccelsPlus, RelmAction, RelmActionGroup}, adw, gtk
+    actions::{AccelsPlus, RelmAction, RelmActionGroup},
+    adw, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
+    JoinHandle, RelmWidgetExt, SimpleComponent,
 };
 use rust_i18n::t;
 use stremio_core_losange::{
