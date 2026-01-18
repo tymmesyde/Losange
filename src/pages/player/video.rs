@@ -370,6 +370,7 @@ impl Video {
                         active: track.selected,
                     }
                 })
+                .sorted_by(|a, b| Ord::cmp(&a.lang, &b.lang))
                 .collect_vec()
         };
 
