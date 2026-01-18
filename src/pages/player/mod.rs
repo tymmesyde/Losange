@@ -473,7 +473,18 @@ impl SimpleComponent for Player {
                     .emit(TracksMenuInput::Update(video.audio_tracks.to_owned()));
             }
             PlayerInput::Ended => {
-                APP_BROKER.send(AppMsg::NavigateBack);
+                let ctx = CTX_STATE.read_inner();
+                let player = PLAYER_STATE.read_inner();
+
+                match (&player.next_stream, ctx.settings.binge_watching) {
+                    (Some(stream), true) => {
+                        sender.input_sender().emit(PlayerInput::Unload);
+                        sender
+                            .input_sender()
+                            .emit(PlayerInput::Load(Box::new(stream.to_owned())));
+                    }
+                    _ => APP_BROKER.send(AppMsg::NavigateBack),
+                }
             }
             PlayerInput::Error => {
                 let message = t!("error_player").to_string();

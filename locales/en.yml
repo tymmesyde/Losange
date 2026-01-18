@@ -5,6 +5,9 @@ menu_preferences: _Preferences
 menu_shortcuts: _Shortcuts
 
 preferences: Preferences
+subtitles: Subtitles
+playback: Playback
+auto_play: Auto play next video
 
 shortcut_search: Open Search
 shortcut_preferences: Edit Preferences

@@ -19,6 +19,7 @@ pub enum PreferencesDialogInput {
     DetailsContentLogoChanged(bool),
     PlayerSubtitlesSizeChanged(f64),
     PlayerSubtitlesOffsetChanged(f64),
+    PlayerAutoPlayChanged(bool),
     ServerUrlChanged(String),
     ServerEnabledChanged(bool),
 }
@@ -107,6 +108,8 @@ impl Component for PreferencesDialog {
                 set_margin_bottom: 26,
 
                 add = &adw::PreferencesGroup {
+                    set_title: &t!("subtitles"),
+
                     adw::SpinRow::with_range(SUBTITLES_MIN_SIZE as f64, SUBTITLES_MAX_SIZE as f64, 25.0) {
                         set_title: &t!("subtitles_size"),
 
@@ -130,8 +133,22 @@ impl Component for PreferencesDialog {
                             let value = row.value();
                             sender.input(PreferencesDialogInput::PlayerSubtitlesOffsetChanged(value));
                         } @subtitles_offset_handler,
-                    }
+                    },
+
                 },
+
+                add = &adw::PreferencesGroup {
+                    set_title: &t!("playback"),
+
+                    adw::SwitchRow {
+                        set_title: &t!("auto_play"),
+                        set_active: ctx.settings.binge_watching,
+                        connect_active_notify[sender] => move |row| {
+                            let value = row.is_active();
+                            sender.input(PreferencesDialogInput::PlayerAutoPlayChanged(value));
+                        }
+                    },
+                }
             },
 
             add = &adw::PreferencesPage {
@@ -236,6 +253,12 @@ impl Component for PreferencesDialog {
             PreferencesDialogInput::PlayerSubtitlesOffsetChanged(value) => {
                 models::ctx::update_settings(|mut settings| {
                     settings.subtitles_offset = value as u8;
+                    settings
+                });
+            }
+            PreferencesDialogInput::PlayerAutoPlayChanged(value) => {
+                models::ctx::update_settings(|mut settings| {
+                    settings.binge_watching = value;
                     settings
                 });
             }
