@@ -1,5 +1,5 @@
 Name:           Losange
-Version:        0.7.1
+Version:        0.8.0
 Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
@@ -40,6 +40,17 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
+* Sun Jan 18 2026 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.8.0-1
+- Add see all buttons on catalogs
+- Add next video button on player
+- Add auto play next video
+- Add player shortcuts
+- Add disabled option for subtitles
+- Allow full player window to be dragged
+- Improve media tracks label
+- Removed carousel functionnality from catalogs
+- Fix buffering indicator not appearing when seeking
+
 * Sat Jan 3 2026 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.7.1-1
 - Fix progress not updating on Continue Watching items
 

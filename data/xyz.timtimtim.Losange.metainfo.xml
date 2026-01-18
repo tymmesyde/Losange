@@ -39,6 +39,19 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.8.0" date="2026-01-18">
+            <description>
+                <p>Add see all buttons on catalogs</p>
+                <p>Add next video button on player</p>
+                <p>Add auto play next video</p>
+                <p>Add player shortcuts</p>
+                <p>Add disabled option for subtitles</p>
+                <p>Allow full player window to be dragged</p>
+                <p>Improve media tracks label</p>
+                <p>Removed carousel functionnality from catalogs</p>
+                <p>Fix buffering indicator not appearing when seeking</p>
+            </description>
+        </release>
         <release version="0.7.1" date="2026-01-03">
             <description>
                 <p>Fix progress not updating on Continue Watching items</p>
