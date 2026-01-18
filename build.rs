@@ -13,6 +13,7 @@ fn main() {
             "right",
             "verified-checkmark",
             "play",
+            "skip-forward-large",
             "external-link",
             "language",
             "sound-wave",

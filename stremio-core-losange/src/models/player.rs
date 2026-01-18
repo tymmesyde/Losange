@@ -20,6 +20,7 @@ pub struct PlayerState {
     pub title: String,
     pub image: Option<Url>,
     pub time: f64,
+    pub next_stream: Option<Stream>,
 }
 
 pub static PLAYER_STATE: SharedState<PlayerState> = SharedState::new();
@@ -75,10 +76,34 @@ pub fn update(player: &Player, ctx: &Ctx) {
         .as_ref()
         .map_or(0.0, |library_item| library_item.state.time_offset as f64);
 
+    let next_stream = player
+        .selected
+        .as_ref()
+        .zip(player.next_streams.as_ref())
+        .and_then(|(selected, next_streams)| {
+            next_streams
+                .content
+                .as_ref()
+                .and_then(|content| content.ready())
+                .zip(Some(&next_streams.request))
+                .and_then(|(streams, request)| {
+                    streams
+                        .iter()
+                        .find(|next_stream| next_stream.is_binge_match(&selected.stream))
+                        .cloned()
+                        .zip(Some(request))
+                })
+                .zip(selected.meta_request.as_ref())
+                .map(|((next_stream, stream_request), meta_request)| {
+                    Stream::new(&next_stream, meta_request, stream_request)
+                })
+        });
+
     state.uri = uri;
     state.title = title;
     state.image = image;
     state.time = time;
+    state.next_stream = next_stream;
 }
 
 pub fn load(stream: Stream) {

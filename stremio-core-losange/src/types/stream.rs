@@ -13,6 +13,7 @@ pub struct Stream {
     pub description: String,
     pub source: StreamSource,
     pub subtitles: Vec<Subtitles>,
+    pub behavior_hints: StreamBehaviorHints,
     pub meta_request: ResourceRequest,
     pub stream_request: ResourceRequest,
 }
@@ -28,6 +29,7 @@ impl Stream {
             description: stream.description.to_owned().unwrap_or_default(),
             source: stream.source.to_owned(),
             subtitles: stream.subtitles.to_owned(),
+            behavior_hints: stream.behavior_hints.to_owned(),
             meta_request: meta_request.to_owned(),
             stream_request: stream_request.to_owned(),
         }
@@ -66,7 +68,7 @@ impl From<Stream> for CoreStream {
             description: None,
             subtitles: stream.subtitles,
             thumbnail: None,
-            behavior_hints: StreamBehaviorHints::default(),
+            behavior_hints: stream.behavior_hints,
         }
     }
 }

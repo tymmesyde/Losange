@@ -30,6 +30,7 @@ pub enum PlayerInput {
     MouseLeaveControls,
     Immersed,
     PlayPause,
+    PlayNext,
     Seek,
     SeekPrev,
     SeekNext,
@@ -186,6 +187,16 @@ impl SimpleComponent for Player {
                                 connect_clicked => PlayerInput::PlayPause,
                             },
 
+                            gtk::Button {
+                                set_size_request: (45, 45),
+                                set_icon_name: "skip-forward-large",
+
+                                #[watch]
+                                set_visible: player.next_stream.is_some(),
+
+                                connect_clicked => PlayerInput::PlayNext,
+                            },
+
                             #[local_ref]
                             volume -> gtk::ScaleButton {
                                 set_size_request: (45, 45),
@@ -335,6 +346,7 @@ impl SimpleComponent for Player {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             PlayerInput::Load(stream) => {
+                println!("{:?}", stream);
                 models::player::load(*stream);
             }
             PlayerInput::Unload => {
@@ -396,6 +408,16 @@ impl SimpleComponent for Player {
                     self.video.emit(VideoInput::Play);
                 } else {
                     self.video.emit(VideoInput::Pause);
+                }
+            }
+            PlayerInput::PlayNext => {
+                let player = PLAYER_STATE.read_inner();
+
+                if let Some(stream) = &player.next_stream {
+                    sender.input_sender().emit(PlayerInput::Unload);
+                    sender
+                        .input_sender()
+                        .emit(PlayerInput::Load(Box::new(stream.to_owned())));
                 }
             }
             PlayerInput::Seek => {
