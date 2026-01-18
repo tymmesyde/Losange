@@ -1,6 +1,7 @@
 use gtk::prelude::*;
 use relm4::factory::{DynamicIndex, FactoryComponent, FactorySender};
 use relm4::gtk;
+use rust_i18n::t;
 
 pub struct MenuOptionInit {
     pub id: i64,
@@ -37,7 +38,7 @@ impl FactoryComponent for MenuOption {
     view! {
          gtk::CheckButton {
             set_height_request: 35,
-            set_label: Some(&self.label),
+            set_label: Some(&t!(&self.label)),
             set_active: self.active,
             set_group: Some(&self.group),
 

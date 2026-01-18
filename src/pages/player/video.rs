@@ -373,7 +373,20 @@ impl Video {
                 .collect_vec()
         };
 
-        (media_tracks("sub"), media_tracks("audio"))
+        let mut text_tracks = media_tracks("sub");
+        let text_track_disabled = text_tracks.iter().all(|track| !track.active);
+
+        text_tracks.insert(
+            0,
+            MediaTrack {
+                id: -1,
+                lang: "und".to_owned(),
+                label: "disabled".to_owned(),
+                active: text_track_disabled,
+            },
+        );
+
+        (text_tracks, media_tracks("audio"))
     }
 
     fn start(&mut self, uri: &str, start_time: f64, sender: ComponentSender<Self>) {
@@ -425,7 +438,15 @@ impl Video {
     }
 
     fn set_text_track(&self, id: i64) {
-        if let Err(e) = self.mpv.borrow().set_property("sid", id) {
+        let mpv = self.mpv.borrow();
+
+        let result = if id == -1 {
+            mpv.set_property("sid", "no")
+        } else {
+            mpv.set_property("sid", id)
+        };
+
+        if let Err(e) = result {
             error!("Failed to set text track: {e}");
         }
     }
