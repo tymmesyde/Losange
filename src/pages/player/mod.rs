@@ -101,9 +101,8 @@ impl SimpleComponent for Player {
                 },
             },
 
-            gtk::Box {
+            gtk::WindowHandle {
                 add_css_class: relm4::css::classes::OSD,
-                set_orientation: gtk::Orientation::Vertical,
                 set_expand: true,
                 #[watch]
                 set_cursor_from_name: model.immersed.then_some("none"),
