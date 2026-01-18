@@ -1,6 +1,6 @@
 use gtk::prelude::*;
 use relm4::factory::{DynamicIndex, FactoryComponent, FactorySender};
-use relm4::{gtk, RelmWidgetExt};
+use relm4::gtk;
 
 pub struct MenuOptionInit {
     pub id: i64,
@@ -32,21 +32,20 @@ impl FactoryComponent for MenuOption {
     type Input = MenuOptionInput;
     type Output = MenuOptionOutput;
     type CommandOutput = ();
-    type ParentWidget = gtk::Box;
+    type ParentWidget = gtk::ListBox;
 
     view! {
-        gtk::ListBoxRow {
-            gtk::CheckButton {
-                set_margin_all: 4,
-                set_label: Some(&self.label),
-                set_active: self.active,
-                set_group: Some(&self.group),
-                connect_toggled[sender] => move |button| {
-                    if button.is_active() {
-                        sender.input_sender().emit(MenuOptionInput::Selected);
-                    }
-                },
-            }
+         gtk::CheckButton {
+            set_height_request: 35,
+            set_label: Some(&self.label),
+            set_active: self.active,
+            set_group: Some(&self.group),
+
+            connect_toggled[sender] => move |button| {
+                if button.is_active() {
+                    sender.input_sender().emit(MenuOptionInput::Selected);
+                }
+            },
         }
     }
 

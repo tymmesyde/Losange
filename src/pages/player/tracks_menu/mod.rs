@@ -2,10 +2,8 @@ mod menu_option;
 
 use menu_option::{MenuOption, MenuOptionInit, MenuOptionOutput};
 use relm4::{
-    gtk::{
-        self,
-        prelude::{OrientableExt, WidgetExt},
-    },
+    css,
+    gtk::{self, prelude::WidgetExt},
     prelude::FactoryVecDeque,
     ComponentParts, ComponentSender, SimpleComponent,
 };
@@ -52,13 +50,15 @@ impl SimpleComponent for TracksMenu {
                     set_hscrollbar_policy: gtk::PolicyType::Never,
                     set_propagate_natural_height: true,
                     set_max_content_height: 300,
-                    set_min_content_width: 200,
+                    set_min_content_width: 150,
 
                     #[local_ref]
-                    tracks -> gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
+                    tracks -> gtk::ListBox {
+                        add_css_class: css::classes::OSD,
+                        set_width_request: 150,
                         set_vexpand: true,
                         set_hexpand: true,
+                        set_selection_mode: gtk::SelectionMode::None,
                     }
                 }
             }
@@ -71,7 +71,7 @@ impl SimpleComponent for TracksMenu {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let tracks = FactoryVecDeque::builder()
-            .launch(gtk::Box::default())
+            .launch(gtk::ListBox::default())
             .forward(sender.input_sender(), |msg| match msg {
                 MenuOptionOutput::Clicked(index) => TracksMenuInput::TrackClicked(index),
             });
