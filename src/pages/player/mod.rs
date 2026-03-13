@@ -6,7 +6,7 @@ use std::time::Duration;
 use adw::prelude::*;
 use gtk::glib;
 use relm4::{
-    actions::{AccelsPlus, RelmAction, RelmActionGroup},
+    actions::{ActionName, RelmAction, RelmActionGroup},
     adw, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
     JoinHandle, RelmWidgetExt, SimpleComponent,
 };
@@ -347,10 +347,24 @@ impl SimpleComponent for Player {
             actions.register_for_widget(window);
         }
 
-        let app = relm4::main_application();
-        app.set_accelerators_for_action::<PlayPauseAction>(&["space"]);
-        app.set_accelerators_for_action::<SeekPrevAction>(&["Left"]);
-        app.set_accelerators_for_action::<SeekNextAction>(&["Right"]);
+        let shortcut_controller = gtk::ShortcutController::new();
+
+        let shortcuts = [
+            ("space", PlayPauseAction::NAME),
+            ("Left", SeekPrevAction::NAME),
+            ("Right", SeekNextAction::NAME),
+        ];
+
+        for (key, action) in shortcuts {
+            shortcut_controller.add_shortcut(
+                gtk::Shortcut::builder()
+                    .action(&gtk::NamedAction::new(action))
+                    .trigger(&gtk::ShortcutTrigger::parse_string(key).unwrap())
+                    .build(),
+            );
+        }
+
+        root.add_controller(shortcut_controller);
 
         ComponentParts { model, widgets }
     }
