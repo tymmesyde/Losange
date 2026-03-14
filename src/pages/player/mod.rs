@@ -13,6 +13,7 @@ use relm4::{
 use rust_i18n::t;
 use stremio_core_losange::{
     models::{self, ctx::CTX_STATE, player::PLAYER_STATE},
+    stremio_core::types::streams::{AudioTrack, SubtitleTrack},
     types::stream::Stream,
 };
 use tokio::time::sleep;
@@ -475,11 +476,28 @@ impl SimpleComponent for Player {
                 let volume = self.volume.value();
                 self.video.emit(VideoInput::Volume(volume));
             }
-            PlayerInput::TextTrackChanged(index) => {
-                self.video.emit(VideoInput::TextTrack(index));
+            PlayerInput::TextTrackChanged(id) => {
+                self.video.emit(VideoInput::TextTrack(id));
+
+                models::player::update_stream_state(|mut settings| {
+                    settings.subtitle_track = Some(SubtitleTrack {
+                        id: id.to_string(),
+                        embedded: true,
+                        language: None,
+                    });
+                    settings
+                });
             }
-            PlayerInput::AudioTrackChanged(index) => {
-                self.video.emit(VideoInput::AudioTrack(index));
+            PlayerInput::AudioTrackChanged(id) => {
+                self.video.emit(VideoInput::AudioTrack(id));
+
+                models::player::update_stream_state(|mut settings| {
+                    settings.audio_track = Some(AudioTrack {
+                        id: id.to_string(),
+                        language: None,
+                    });
+                    settings
+                });
             }
             PlayerInput::Fullscreen => {
                 if let Some(window) = relm4::main_application().active_window() {
@@ -495,12 +513,27 @@ impl SimpleComponent for Player {
                 models::player::update_time(time, duration);
             }
             PlayerInput::TracksChanged => {
+                let player = PLAYER_STATE.read_inner();
                 let video = VIDEO_STATE.read_inner();
 
                 self.text_tracks_menu
                     .emit(TracksMenuInput::Update(video.text_tracks.to_owned()));
                 self.audio_tracks_menu
                     .emit(TracksMenuInput::Update(video.audio_tracks.to_owned()));
+
+                if let Some(state) = &player.stream_state {
+                    if let Some(track) = &state.subtitle_track {
+                        if let Ok(id) = track.id.parse::<i64>() {
+                            self.video.emit(VideoInput::TextTrack(id));
+                        }
+                    }
+
+                    if let Some(track) = &state.audio_track {
+                        if let Ok(id) = track.id.parse::<i64>() {
+                            self.video.emit(VideoInput::AudioTrack(id));
+                        }
+                    }
+                }
             }
             PlayerInput::Ended => {
                 let ctx = CTX_STATE.read_inner();

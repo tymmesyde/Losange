@@ -5,6 +5,7 @@ use stremio_core::{
         player::{Player, Selected},
     },
     runtime::msg::{Action, ActionLoad, ActionPlayer},
+    types::streams::StreamItemState,
 };
 use url::Url;
 
@@ -21,6 +22,7 @@ pub struct PlayerState {
     pub image: Option<Url>,
     pub time: f64,
     pub next_stream: Option<Stream>,
+    pub stream_state: Option<StreamItemState>,
 }
 
 pub static PLAYER_STATE: SharedState<PlayerState> = SharedState::new();
@@ -99,11 +101,14 @@ pub fn update(player: &Player, ctx: &Ctx) {
                 })
         });
 
+    let stream_state = player.stream_state.to_owned();
+
     state.uri = uri;
     state.title = title;
     state.image = image;
     state.time = time;
     state.next_stream = next_stream;
+    state.stream_state = stream_state;
 }
 
 pub fn load(stream: Stream) {
@@ -146,6 +151,22 @@ pub fn update_seek_time(time: f64, duration: f64) {
             time: time as u64,
             duration: duration as u64,
             device: "linux".to_owned(),
+        }),
+        Some(LosangeModelField::Player),
+    );
+}
+
+pub fn update_stream_state<T: FnOnce(StreamItemState) -> StreamItemState>(update: T) {
+    let state = PLAYER_STATE.read_inner();
+    let stream_state = match &state.stream_state {
+        Some(state) => state.to_owned(),
+        None => StreamItemState::default(),
+    };
+    let updated_stream_state = update(stream_state);
+
+    dispatch(
+        Action::Player(ActionPlayer::StreamStateChanged {
+            state: updated_stream_state,
         }),
         Some(LosangeModelField::Player),
     );
