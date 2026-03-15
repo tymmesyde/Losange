@@ -7,6 +7,8 @@ impl WidgetTemplate for Spinner {
         adw::Spinner {
             set_expand: true,
             set_halign: gtk::Align::Center,
+            set_width_request: 25,
+            set_height_request: 25,
         }
     }
 }
