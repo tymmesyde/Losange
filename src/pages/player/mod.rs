@@ -6,7 +6,7 @@ use std::time::Duration;
 use adw::prelude::*;
 use gtk::glib;
 use relm4::{
-    actions::{ActionName, RelmAction, RelmActionGroup},
+    actions::{ActionGroupName, ActionName, RelmAction, RelmActionGroup},
     adw, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
     JoinHandle, RelmWidgetExt, SimpleComponent,
 };
@@ -26,6 +26,12 @@ relm4::new_action_group!(pub(super) PlayerActionGroup, "player");
 relm4::new_stateless_action!(pub(super) PlayPauseAction, PlayerActionGroup, "play_pause");
 relm4::new_stateless_action!(pub(super) SeekPrevAction, PlayerActionGroup, "seek_prev");
 relm4::new_stateless_action!(pub(super) SeekNextAction, PlayerActionGroup, "seek_next");
+
+const SHORTCUTS: &[(&str, &str, &str)] = &[
+    ("space", PlayerActionGroup::NAME, PlayPauseAction::NAME),
+    ("Left", PlayerActionGroup::NAME, SeekPrevAction::NAME),
+    ("Right", PlayerActionGroup::NAME, SeekNextAction::NAME),
+];
 
 #[derive(Debug)]
 pub enum PlayerInput {
@@ -341,8 +347,6 @@ impl SimpleComponent for Player {
             statistics_task: None,
         };
 
-        let widgets = view_output!();
-
         let play_pause_action = {
             let sender = sender.input_sender().clone();
             RelmAction::<PlayPauseAction>::new_stateless(move |_| {
@@ -375,22 +379,21 @@ impl SimpleComponent for Player {
 
         let shortcut_controller = gtk::ShortcutController::new();
 
-        let shortcuts = [
-            ("space", PlayPauseAction::NAME),
-            ("Left", SeekPrevAction::NAME),
-            ("Right", SeekNextAction::NAME),
-        ];
+        for (key, group, action) in SHORTCUTS {
+            shortcut_controller.add_shortcut({
+                let named_action = gtk::NamedAction::new(&format!("{group}.{action}"));
+                let trigger = gtk::ShortcutTrigger::parse_string(key).unwrap();
 
-        for (key, action) in shortcuts {
-            shortcut_controller.add_shortcut(
                 gtk::Shortcut::builder()
-                    .action(&gtk::NamedAction::new(action))
-                    .trigger(&gtk::ShortcutTrigger::parse_string(key).unwrap())
-                    .build(),
-            );
+                    .action(&named_action)
+                    .trigger(&trigger)
+                    .build()
+            });
         }
 
         root.add_controller(shortcut_controller);
+
+        let widgets = view_output!();
 
         ComponentParts { model, widgets }
     }
