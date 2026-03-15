@@ -19,6 +19,7 @@ chrono = "0.4.44"
 clap = { version = "4.5.60", features = ["derive"] }
 color-thief = "0.2.2"
 epoxy = "0.1.0"
+hex = "0.4.3"
 hsl = "0.1.1"
 http-cache-reqwest = "0.15.1"
 itertools = "0.14.0"

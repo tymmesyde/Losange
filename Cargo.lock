@@ -2079,6 +2079,7 @@ dependencies = [
  "clap",
  "color-thief",
  "epoxy",
+ "hex",
  "hsl",
  "http-cache-reqwest",
  "itertools 0.14.0",

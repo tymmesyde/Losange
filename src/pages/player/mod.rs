@@ -12,7 +12,7 @@ use relm4::{
 };
 use rust_i18n::t;
 use stremio_core_losange::{
-    models::{self, ctx::CTX_STATE, player::PLAYER_STATE},
+    models::{self, ctx::CTX_STATE, player::PLAYER_STATE, server::SERVER_STATE},
     stremio_core::types::streams::{AudioTrack, SubtitleTrack},
     types::stream::Stream,
 };
@@ -63,6 +63,7 @@ pub struct Player {
     volume: gtk::ScaleButton,
     text_tracks_menu: Controller<TracksMenu>,
     audio_tracks_menu: Controller<TracksMenu>,
+    statistics_task: Option<JoinHandle<()>>,
 }
 
 #[relm4::component(pub)]
@@ -133,8 +134,30 @@ impl SimpleComponent for Player {
                         #[watch]
                         set_reveal_child: state.buffering,
 
-                        #[template]
-                        Spinner {}
+                        gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+                            set_spacing: 18,
+
+                            #[template]
+                            Spinner {},
+
+                            adw::Clamp {
+                                set_maximum_size: 100,
+
+                                #[watch]
+                                set_visible: player.torrent_info.is_some(),
+
+                                match server.torrent_progress {
+                                    Some(progress) => gtk::ProgressBar {
+                                        #[watch]
+                                        set_fraction: progress / 100.0,
+                                    },
+                                    None => gtk::Box {
+                                        set_visible: false,
+                                    },
+                                },
+                            }
+                        }
                     },
 
                     add_overlay = &gtk::Revealer {
@@ -269,6 +292,7 @@ impl SimpleComponent for Player {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let player = PLAYER_STATE.read_inner();
+        let server = SERVER_STATE.read_inner();
         let state = VIDEO_STATE.read_inner();
 
         CTX_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateVideo);
@@ -314,6 +338,7 @@ impl SimpleComponent for Player {
             volume: volume.to_owned(),
             text_tracks_menu,
             audio_tracks_menu,
+            statistics_task: None,
         };
 
         let widgets = view_output!();
@@ -372,6 +397,7 @@ impl SimpleComponent for Player {
 
     fn pre_view() {
         let player = PLAYER_STATE.read_inner();
+        let server = SERVER_STATE.read_inner();
         let state = VIDEO_STATE.read_inner();
     }
 
@@ -388,6 +414,15 @@ impl SimpleComponent for Player {
                 let ctx = CTX_STATE.read_inner();
                 let player = PLAYER_STATE.read_inner();
                 let video = VIDEO_STATE.read_inner();
+
+                self.cancel_statistics_task();
+
+                if let Some((info_hash, file_idx)) = &player.torrent_info {
+                    let info_hash = info_hash.clone();
+                    let file_idx = *file_idx;
+
+                    self.create_statistics_task(info_hash, file_idx);
+                }
 
                 if !video.loaded {
                     if let Some(uri) = &player.uri {
@@ -558,6 +593,7 @@ impl SimpleComponent for Player {
 
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
         self.cancel_immersed_timeout();
+        self.cancel_statistics_task();
     }
 }
 
@@ -573,6 +609,23 @@ impl Player {
 
     fn cancel_immersed_timeout(&mut self) {
         if let Some(task) = self.immersed_timeout.take() {
+            task.abort();
+        }
+    }
+
+    fn create_statistics_task(&mut self, info_hash: String, file_idx: u16) {
+        let task = tokio::spawn(async move {
+            loop {
+                models::server::update_statistics(&info_hash, file_idx);
+                sleep(Duration::from_millis(800)).await;
+            }
+        });
+
+        self.statistics_task = Some(task);
+    }
+
+    fn cancel_statistics_task(&mut self) {
+        if let Some(task) = self.statistics_task.take() {
             task.abort();
         }
     }

@@ -5,7 +5,7 @@ use stremio_core::{
         player::{Player, Selected},
     },
     runtime::msg::{Action, ActionLoad, ActionPlayer},
-    types::streams::StreamItemState,
+    types::{resource::StreamSource, streams::StreamItemState},
 };
 use url::Url;
 
@@ -23,6 +23,7 @@ pub struct PlayerState {
     pub time: f64,
     pub next_stream: Option<Stream>,
     pub stream_state: Option<StreamItemState>,
+    pub torrent_info: Option<(String, u16)>,
 }
 
 pub static PLAYER_STATE: SharedState<PlayerState> = SharedState::new();
@@ -103,12 +104,25 @@ pub fn update(player: &Player, ctx: &Ctx) {
 
     let stream_state = player.stream_state.to_owned();
 
+    let torrent_info = player
+        .selected
+        .as_ref()
+        .and_then(|selected| match selected.stream.source {
+            StreamSource::Torrent {
+                info_hash,
+                file_idx: Some(file_idx),
+                ..
+            } => Some((hex::encode(info_hash), file_idx)),
+            _ => None,
+        });
+
     state.uri = uri;
     state.title = title;
     state.image = image;
     state.time = time;
     state.next_stream = next_stream;
     state.stream_state = stream_state;
+    state.torrent_info = torrent_info;
 }
 
 pub fn load(stream: Stream) {
