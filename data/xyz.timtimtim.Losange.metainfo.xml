@@ -39,6 +39,14 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.9.0" date="2026-03-23">
+            <description>
+                <p>Remember previously selected tracks on player</p>
+                <p>Add torrent progress on player</p>
+                <p>Fix issue with space key on input fields</p>
+                <p>Fix tags overflow on details</p>
+            </description>
+        </release>
         <release version="0.8.0" date="2026-01-18">
             <description>
                 <p>Add see all buttons on catalogs</p>

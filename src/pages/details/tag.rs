@@ -1,6 +1,6 @@
 use gtk::prelude::*;
 use relm4::{
-    gtk, adw,
+    adw, gtk,
     prelude::{DynamicIndex, FactoryComponent},
     FactorySender,
 };
