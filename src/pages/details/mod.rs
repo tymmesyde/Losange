@@ -184,8 +184,8 @@ impl AsyncComponent for DetailsPage {
                                             },
 
                                             #[local_ref]
-                                            genres -> gtk::Box {
-                                                set_spacing: 8,
+                                            genres -> adw::WrapBox {
+                                                set_child_spacing: 8,
                                                 #[watch]
                                                 set_visible: !selected.genres.is_empty(),
                                             }
@@ -207,8 +207,8 @@ impl AsyncComponent for DetailsPage {
                                             },
 
                                             #[local_ref]
-                                            directors -> gtk::Box {
-                                                set_spacing: 8,
+                                            directors -> adw::WrapBox  {
+                                                set_child_spacing: 8,
                                             },
                                         },
 
@@ -223,8 +223,8 @@ impl AsyncComponent for DetailsPage {
                                             },
 
                                             #[local_ref]
-                                            writers -> gtk::Box {
-                                                set_spacing: 8,
+                                            writers -> adw::WrapBox {
+                                                set_child_spacing: 8,
                                             },
                                         },
 
@@ -239,8 +239,8 @@ impl AsyncComponent for DetailsPage {
                                             },
 
                                             #[local_ref]
-                                            actors -> gtk::Box {
-                                                set_spacing: 8,
+                                            actors -> adw::WrapBox {
+                                                set_child_spacing: 8,
                                             },
                                         }
                                     }
@@ -305,23 +305,23 @@ impl AsyncComponent for DetailsPage {
             .detach();
 
         let genres = FactoryVecDeque::builder()
-            .launch(gtk::Box::default())
+            .launch(adw::WrapBox::default())
             .detach();
 
         let directors = FactoryVecDeque::builder()
-            .launch(gtk::Box::default())
+            .launch(adw::WrapBox::default())
             .forward(sender.input_sender(), |msg| match msg {
                 TagOutput::Clicked(value) => DetailsPageInput::OpenSearch(value),
             });
 
         let writers = FactoryVecDeque::builder()
-            .launch(gtk::Box::default())
+            .launch(adw::WrapBox::default())
             .forward(sender.input_sender(), |msg| match msg {
                 TagOutput::Clicked(value) => DetailsPageInput::OpenSearch(value),
             });
 
         let actors = FactoryVecDeque::builder()
-            .launch(gtk::Box::default())
+            .launch(adw::WrapBox::default())
             .forward(sender.input_sender(), |msg| match msg {
                 TagOutput::Clicked(value) => DetailsPageInput::OpenSearch(value),
             });

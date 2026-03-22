@@ -1,6 +1,6 @@
 use gtk::prelude::*;
 use relm4::{
-    gtk,
+    gtk, adw,
     prelude::{DynamicIndex, FactoryComponent},
     FactorySender,
 };
@@ -27,7 +27,7 @@ impl FactoryComponent for Tag {
     type Input = TagInput;
     type Output = TagOutput;
     type CommandOutput = ();
-    type ParentWidget = gtk::Box;
+    type ParentWidget = adw::WrapBox;
 
     view! {
         gtk::Button {
