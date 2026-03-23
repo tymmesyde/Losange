@@ -14,21 +14,25 @@ pub struct Storage {
 
 impl Storage {
     pub fn new(location: &Path) -> Result<Self, EnvError> {
-        fs::create_dir_all(location).map_err(|_| EnvError::StorageUnavailable)?;
+        fs::create_dir_all(location)
+            .map_err(|e| EnvError::StorageWriteError(format!("create storage directory at {}: {e}", location.display())))?;
         let path = location.join("stremio.redb");
-        let db = Database::create(path).map_err(|_| EnvError::StorageUnavailable)?;
+        let db = Database::create(&path)
+            .map_err(|e| EnvError::StorageWriteError(format!("create storage database at {}: {e}", path.display())))?;
 
-        let write_txn = db.begin_write().map_err(|_| EnvError::StorageUnavailable)?;
+        let write_txn = db
+            .begin_write()
+            .map_err(|e| EnvError::StorageWriteError(format!("begin storage initialization transaction: {e}")))?;
 
         {
             write_txn
                 .open_table(TABLE)
-                .map_err(|_| EnvError::StorageUnavailable)?;
+                .map_err(|e| EnvError::StorageWriteError(format!("open storage table during initialization: {e}")))?;
         }
 
         write_txn
             .commit()
-            .map_err(|_| EnvError::StorageUnavailable)?;
+            .map_err(|e| EnvError::StorageWriteError(format!("commit storage initialization transaction: {e}")))?;
 
         Ok(Self { db: Arc::new(db) })
     }
