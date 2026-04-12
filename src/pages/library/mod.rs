@@ -1,18 +1,17 @@
 use adw::prelude::*;
 use itertools::Itertools;
 use relm4::{
-    adw, css, factory::FactoryVecDeque, gtk, Component, ComponentController, ComponentParts,
-    ComponentSender, Controller, RelmWidgetExt, SimpleComponent,
+    adw, css, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
+    RelmWidgetExt, SimpleComponent,
 };
 use rust_i18n::t;
 use stremio_core_losange::models::{self, library::LIBRARY_STATE};
 
 use crate::{
     app::AppMsg,
-    common::layout,
     components::{
         dropdown::{DropDown, DropDownInput, DropDownOutput},
-        item_box::{ItemBox, ItemBoxInput},
+        meta_item::grid::{GridMetaItem, GridMetaItemInput, GridMetaItemOutput},
     },
     APP_BROKER,
 };
@@ -21,16 +20,16 @@ use crate::{
 pub enum LibraryPageInput {
     Load,
     Update,
-    LayoutUpdate,
+    LoadMore,
     TypeChanged(usize),
     OrderChanged(usize),
+    ItemClicked(String),
 }
 
 pub struct LibraryPage {
     types: Controller<DropDown>,
     orders: Controller<DropDown>,
-    scrolled_window: gtk::ScrolledWindow,
-    items: FactoryVecDeque<ItemBox<gtk::FlowBox>>,
+    grid: Controller<GridMetaItem>,
 }
 
 #[relm4::component(pub)]
@@ -46,7 +45,7 @@ impl SimpleComponent for LibraryPage {
             connect_realize => LibraryPageInput::Load,
 
             #[transition = "Crossfade"]
-            if model.items.is_empty() {
+            if library.items.is_empty() {
                 adw::StatusPage {
                     add_css_class: css::classes::COMPACT,
                     set_title: &t!("library_empty_title"),
@@ -73,32 +72,7 @@ impl SimpleComponent for LibraryPage {
                         model.orders.widget(),
                     },
 
-                    #[local_ref]
-                    scrolled_window -> gtk::ScrolledWindow {
-                        set_expand: true,
-
-                        #[wrap(Some)]
-                        set_vadjustment = &gtk::Adjustment {
-                            connect_changed => LibraryPageInput::LayoutUpdate,
-                            connect_value_changed => LibraryPageInput::LayoutUpdate,
-                        },
-
-                        #[local_ref]
-                        items -> gtk::FlowBox {
-                            set_valign: gtk::Align::Start,
-                            set_halign: gtk::Align::Fill,
-                            set_row_spacing: 12,
-                            set_column_spacing: 12,
-                            set_margin_horizontal: 12,
-                            set_margin_top: 6,
-                            set_margin_bottom: 12,
-                            set_homogeneous: true,
-                            set_max_children_per_line: 25,
-                            set_selection_mode: gtk::SelectionMode::None,
-
-                            connect_map => LibraryPageInput::LayoutUpdate,
-                        }
-                    }
+                    model.grid.widget(),
                 }
             }
         }
@@ -109,9 +83,9 @@ impl SimpleComponent for LibraryPage {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        LIBRARY_STATE.subscribe(sender.input_sender(), |_| LibraryPageInput::Update);
+        let library = LIBRARY_STATE.read_inner();
 
-        let scrolled_window = gtk::ScrolledWindow::new();
+        LIBRARY_STATE.subscribe(sender.input_sender(), |_| LibraryPageInput::Update);
 
         let types =
             DropDown::builder()
@@ -127,22 +101,27 @@ impl SimpleComponent for LibraryPage {
                     DropDownOutput::Selected(index) => LibraryPageInput::OrderChanged(index),
                 });
 
-        let items = FactoryVecDeque::builder()
-            .launch(gtk::FlowBox::default())
-            .detach();
+        let grid =
+            GridMetaItem::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    GridMetaItemOutput::Clicked(id) => LibraryPageInput::ItemClicked(id),
+                    GridMetaItemOutput::ScrolledToBottom => LibraryPageInput::LoadMore,
+                });
 
         let model = LibraryPage {
             types,
             orders,
-            scrolled_window,
-            items,
+            grid,
         };
 
-        let scrolled_window = &model.scrolled_window;
-        let items = model.items.widget();
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
+    }
+
+    fn pre_view() {
+        let library = LIBRARY_STATE.read_inner();
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
@@ -177,26 +156,11 @@ impl SimpleComponent for LibraryPage {
 
                 self.orders.emit(DropDownInput::Update(orders));
 
-                for (i, item) in state.items.iter().enumerate() {
-                    if i >= self.items.len() {
-                        self.items.guard().push_back(item.to_owned());
-                    } else if state.items[i].id != self.items[i].id {
-                        self.items.guard().insert(i, item.to_owned());
-                    }
-                }
-
-                while self.items.len() > state.items.len() {
-                    self.items.guard().pop_back();
-                }
-
-                self.update_items();
+                self.grid
+                    .emit(GridMetaItemInput::Update(state.items.clone()));
             }
-            LibraryPageInput::LayoutUpdate => {
-                self.update_items();
-
-                if layout::scrolled_to_bottom(&self.scrolled_window) {
-                    models::library::load_next_items();
-                }
+            LibraryPageInput::LoadMore => {
+                models::library::load_next_items();
             }
             LibraryPageInput::TypeChanged(index) => {
                 models::library::load_with_type(index);
@@ -204,25 +168,14 @@ impl SimpleComponent for LibraryPage {
             LibraryPageInput::OrderChanged(index) => {
                 models::library::load_with_order(index);
             }
-        }
-    }
-}
+            LibraryPageInput::ItemClicked(id) => {
+                let state = LIBRARY_STATE.read_inner();
 
-impl LibraryPage {
-    fn update_items(&mut self) {
-        let in_view_items = layout::in_view(
-            &self.items,
-            &self.scrolled_window,
-            gtk::Orientation::Vertical,
-        );
-
-        if !in_view_items.is_empty() {
-            for index in 0..self.items.len() {
-                if in_view_items.contains(&index) {
-                    self.items.guard().send(index, ItemBoxInput::LoadImage);
-                    self.items.guard().send(index, ItemBoxInput::Show);
-                } else {
-                    self.items.guard().send(index, ItemBoxInput::Hide);
+                if let Some(item) = state.items.iter().find(|item| item.id == id) {
+                    APP_BROKER.send(AppMsg::OpenDetails((
+                        item.id.to_owned(),
+                        item.r#type.to_owned(),
+                    )))
                 }
             }
         }

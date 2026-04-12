@@ -53,9 +53,9 @@ impl ImageInit {
     }
 
     pub fn size(mut self, value: impl ImageSize) -> Self {
-        let (height, width) = value.into();
-        self.height = height;
+        let (width, height) = value.into();
         self.width = width;
+        self.height = height;
         self
     }
 

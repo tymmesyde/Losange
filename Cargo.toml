@@ -19,6 +19,7 @@ bytes = "1.11.1"
 chrono = "0.4.44"
 clap = { version = "4.5.60", features = ["derive"] }
 color-thief = "0.2.2"
+dashmap = "6.1.0"
 epoxy = "0.1.0"
 hex = "0.4.3"
 hsl = "0.1.1"

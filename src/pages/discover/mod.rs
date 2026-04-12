@@ -1,8 +1,8 @@
 use adw::prelude::*;
 use itertools::Itertools;
 use relm4::{
-    adw, factory::FactoryVecDeque, gtk, Component, ComponentController, ComponentParts,
-    ComponentSender, Controller, RelmWidgetExt, SimpleComponent,
+    adw, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
+    RelmWidgetExt, SimpleComponent,
 };
 use rust_i18n::t;
 use stremio_core_losange::{
@@ -11,30 +11,31 @@ use stremio_core_losange::{
 };
 
 use crate::{
-    common::{layout, translate},
+    app::AppMsg,
+    common::translate,
     components::{
         dropdown::{DropDown, DropDownInput, DropDownOutput},
-        item_box::{ItemBox, ItemBoxInput},
-        spinner::Spinner,
+        meta_item::grid::{GridMetaItem, GridMetaItemInput, GridMetaItemOutput},
     },
+    APP_BROKER,
 };
 
 #[derive(Debug)]
 pub enum DiscoverPageInput {
     Load(Option<ResourceRequest>),
     Update,
-    LayoutUpdate,
+    LoadMore,
     TypeChanged(usize),
     CatalogChanged(usize),
     GenreChanged(usize),
+    ItemClicked(String),
 }
 
 pub struct DiscoverPage {
     types: Controller<DropDown>,
     catalogs: Controller<DropDown>,
     genres: Controller<DropDown>,
-    scrolled_window: gtk::ScrolledWindow,
-    items: FactoryVecDeque<ItemBox<gtk::FlowBox>>,
+    grid: Controller<GridMetaItem>,
 }
 
 #[relm4::component(pub)]
@@ -61,41 +62,7 @@ impl SimpleComponent for DiscoverPage {
                     model.genres.widget(),
                 },
 
-                #[template]
-                Spinner {
-                    #[watch]
-                    set_visible: model.items.is_empty(),
-                },
-
-                #[local_ref]
-                scrolled_window -> gtk::ScrolledWindow {
-                    set_expand: true,
-
-                    #[watch]
-                    set_visible: !model.items.is_empty(),
-
-                    #[wrap(Some)]
-                    set_vadjustment = &gtk::Adjustment {
-                        connect_changed => DiscoverPageInput::LayoutUpdate,
-                        connect_value_changed => DiscoverPageInput::LayoutUpdate,
-                    },
-
-                    #[local_ref]
-                    items -> gtk::FlowBox {
-                        set_valign: gtk::Align::Start,
-                        set_halign: gtk::Align::Fill,
-                        set_row_spacing: 12,
-                        set_column_spacing: 12,
-                        set_margin_horizontal: 12,
-                        set_margin_top: 6,
-                        set_margin_bottom: 12,
-                        set_homogeneous: true,
-                        set_max_children_per_line: 25,
-                        set_selection_mode: gtk::SelectionMode::None,
-
-                        connect_map => DiscoverPageInput::LayoutUpdate,
-                    }
-                }
+                model.grid.widget(),
             }
         }
     }
@@ -106,8 +73,6 @@ impl SimpleComponent for DiscoverPage {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         DISCOVER_STATE.subscribe(sender.input_sender(), |_| DiscoverPageInput::Update);
-
-        let scrolled_window = gtk::ScrolledWindow::new();
 
         let types =
             DropDown::builder()
@@ -130,20 +95,21 @@ impl SimpleComponent for DiscoverPage {
                     DropDownOutput::Selected(index) => DiscoverPageInput::GenreChanged(index),
                 });
 
-        let items = FactoryVecDeque::builder()
-            .launch(gtk::FlowBox::default())
-            .detach();
+        let grid =
+            GridMetaItem::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    GridMetaItemOutput::Clicked(id) => DiscoverPageInput::ItemClicked(id),
+                    GridMetaItemOutput::ScrolledToBottom => DiscoverPageInput::LoadMore,
+                });
 
         let model = DiscoverPage {
             types,
             catalogs,
             genres,
-            scrolled_window,
-            items,
+            grid,
         };
 
-        let scrolled_window = &model.scrolled_window;
-        let items = model.items.widget();
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
@@ -199,26 +165,11 @@ impl SimpleComponent for DiscoverPage {
 
                 self.genres.emit(DropDownInput::Update(genres));
 
-                for (i, item) in state.items.iter().enumerate() {
-                    if i >= self.items.len() {
-                        self.items.guard().push_back(item.to_owned());
-                    } else if state.items[i].id != self.items[i].id {
-                        self.items.guard().insert(i, item.to_owned());
-                    }
-                }
-
-                while self.items.len() > state.items.len() {
-                    self.items.guard().pop_back();
-                }
-
-                self.update_items();
+                self.grid
+                    .emit(GridMetaItemInput::Update(state.items.clone()));
             }
-            DiscoverPageInput::LayoutUpdate => {
-                self.update_items();
-
-                if layout::scrolled_to_bottom(&self.scrolled_window) {
-                    models::discover::load_next_items();
-                }
+            DiscoverPageInput::LoadMore => {
+                models::discover::load_next_items();
             }
             DiscoverPageInput::TypeChanged(index) => {
                 models::discover::load_with_type(index);
@@ -229,25 +180,14 @@ impl SimpleComponent for DiscoverPage {
             DiscoverPageInput::GenreChanged(index) => {
                 models::discover::load_with_genre(index);
             }
-        }
-    }
-}
+            DiscoverPageInput::ItemClicked(id) => {
+                let state = DISCOVER_STATE.read_inner();
 
-impl DiscoverPage {
-    fn update_items(&mut self) {
-        let in_view_items = layout::in_view(
-            &self.items,
-            &self.scrolled_window,
-            gtk::Orientation::Vertical,
-        );
-
-        if !in_view_items.is_empty() {
-            for index in 0..self.items.len() {
-                if in_view_items.contains(&index) {
-                    self.items.guard().send(index, ItemBoxInput::LoadImage);
-                    self.items.guard().send(index, ItemBoxInput::Show);
-                } else {
-                    self.items.guard().send(index, ItemBoxInput::Hide);
+                if let Some(item) = state.items.iter().find(|item| item.id == id) {
+                    APP_BROKER.send(AppMsg::OpenDetails((
+                        item.id.to_owned(),
+                        item.r#type.to_owned(),
+                    )))
                 }
             }
         }

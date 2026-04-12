@@ -12,6 +12,24 @@ use url::Url;
 
 use super::stream::Stream;
 
+#[derive(Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Shape {
+    #[default]
+    Poster,
+    Square,
+    Landscape,
+}
+
+impl From<PosterShape> for Shape {
+    fn from(shape: PosterShape) -> Self {
+        match shape {
+            PosterShape::Square => Self::Square,
+            PosterShape::Landscape => Self::Landscape,
+            PosterShape::Poster => Self::Poster,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Item {
     pub id: String,
@@ -27,7 +45,7 @@ pub struct Item {
     pub writers: Vec<String>,
     pub actors: Vec<String>,
     pub image: Option<Url>,
-    pub shape: PosterShape,
+    pub shape: Shape,
     pub videos: Vec<Video>,
     pub new_videos: usize,
     pub progress: f64,
@@ -68,7 +86,7 @@ impl From<&MetaItemPreview> for Item {
             writers: get_links(&meta_item.links, "Writers"),
             actors: get_links(&meta_item.links, "Cast"),
             image: meta_item.poster.to_owned(),
-            shape: meta_item.poster_shape.to_owned(),
+            shape: meta_item.poster_shape.to_owned().into(),
             ..Default::default()
         }
     }
@@ -90,7 +108,7 @@ impl From<&LibraryItem> for Item {
             r#type: library_item.r#type.to_owned(),
             name: library_item.name.to_owned(),
             image: library_item.poster.to_owned(),
-            shape: library_item.poster_shape.to_owned(),
+            shape: library_item.poster_shape.to_owned().into(),
             ..Default::default()
         }
     }

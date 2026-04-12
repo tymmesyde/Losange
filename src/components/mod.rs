@@ -4,4 +4,5 @@ pub mod header_menu;
 pub mod image;
 pub mod item_box;
 pub mod list;
+pub mod meta_item;
 pub mod spinner;

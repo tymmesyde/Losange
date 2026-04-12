@@ -10,7 +10,7 @@ use relm4::{
 };
 use url::Url;
 
-use crate::common::{image, net::fetch};
+use crate::common::image;
 
 #[derive(Debug)]
 pub enum ImageInput {
@@ -124,10 +124,7 @@ impl AsyncComponent for Image {
 impl Image {
     async fn load(source: Option<Url>, size: (i32, i32)) -> anyhow::Result<gdk::MemoryTexture> {
         if let Some(uri) = source {
-            let response = fetch(uri).await?;
-            let bytes = response.bytes().await?;
-            let texture = image::load_as_texture(bytes, size)?;
-
+            let texture = image::load_as_texture(uri, size).await?;
             return Ok(texture);
         }
 

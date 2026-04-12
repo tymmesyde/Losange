@@ -9,8 +9,9 @@ use relm4::{
     factory::{DynamicIndex, FactoryComponent, FactoryView, Position},
     gtk, FactorySender, RelmWidgetExt,
 };
+use stremio_core_losange::types::item::Item;
+use stremio_core_losange::types::item::Shape;
 use stremio_core_losange::types::stream::Stream;
-use stremio_core_losange::{stremio_core::types::resource::PosterShape, types::item::Item};
 
 use crate::{
     app::AppMsg,
@@ -23,7 +24,6 @@ use crate::{
 pub enum ItemBoxInput {
     LoadImage,
     Show,
-    Hide,
     Hover(bool),
     Clicked,
 }
@@ -61,15 +61,15 @@ where
             set_orientation: gtk::Orientation::Vertical,
             set_halign: gtk::Align::Center,
             set_expand: false,
-            set_width_request: self.size.1,
+            set_width_request: self.size.0,
             set_spacing: 12,
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
                 set_halign: gtk::Align::Center,
                 set_valign: gtk::Align::Start,
-                set_height_request: self.size.0,
-                set_width_request: self.size.1,
+                set_height_request: self.size.1,
+                set_width_request: self.size.0,
 
                 gtk::Button {
                     add_css_class: css::classes::CARD,
@@ -153,7 +153,7 @@ where
             },
 
             adw::Clamp {
-                set_maximum_size: self.size.1,
+                set_maximum_size: self.size.0,
 
                 #[watch]
                 set_visible: self.settings.boolean("content-title-below"),
@@ -172,9 +172,9 @@ where
         let settings = gio::Settings::new(APP_ID);
 
         let size = match init.shape {
-            PosterShape::Poster => (ITEM_MAX_SIZE, ITEM_MIN_SIZE),
-            PosterShape::Square => (ITEM_MIN_SIZE, ITEM_MIN_SIZE),
-            PosterShape::Landscape => (ITEM_MIN_SIZE, ITEM_MIN_SIZE),
+            Shape::Poster => (ITEM_MIN_SIZE, ITEM_MAX_SIZE),
+            Shape::Square => (ITEM_MIN_SIZE, ITEM_MIN_SIZE),
+            Shape::Landscape => (ITEM_MIN_SIZE, ITEM_MIN_SIZE),
         };
 
         let image = Image::builder()
@@ -209,7 +209,6 @@ where
         match msg {
             ItemBoxInput::LoadImage => self.image.emit(ImageInput::Load),
             ItemBoxInput::Show => self.visible = true,
-            ItemBoxInput::Hide => self.visible = false,
             ItemBoxInput::Hover(state) => self.hover = state,
             ItemBoxInput::Clicked => match &self.last_stream {
                 Some(stream) => APP_BROKER.send(AppMsg::OpenStream(Box::new(stream.to_owned()))),

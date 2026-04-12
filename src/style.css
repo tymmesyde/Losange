@@ -23,8 +23,19 @@ dropdown.flat > button:active {
     background-color: color-mix(in srgb, currentColor 16%, transparent);
 }
 
-flowboxchild {
+gridview {
+    background: transparent;
+}
+
+gridview > child {
+    padding: 0;
+    margin: 6px;
     background-color: transparent;
+}
+
+gridview > child box {
+    border-spacing: 0;
+    margin: 0;
 }
 
 .small-icon {
