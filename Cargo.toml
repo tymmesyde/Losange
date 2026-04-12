@@ -31,8 +31,8 @@ libloading = "0.9.0"
 libmpv2 = "5.0.3"
 mpris-server = "0.9.0"
 open = "5.3.3"
-relm4 = { git = "https://github.com/Relm4/Relm4", features = ["libadwaita", "gnome_49"] }
-relm4-icons = "0.10.1"
+relm4 = { version = "0.11.0", features = ["libadwaita", "gnome_49"] }
+relm4-icons = "0.11.0"
 reqwest = { version = "0.12.28", features = ["rustls-tls", "http2", "json"] }
 reqwest-middleware = "0.4.2"
 rust-i18n = "3.1.5"
