@@ -27,7 +27,7 @@ pub struct Image {
     content_fit: gtk::ContentFit,
     placeholder: Option<&'static str>,
     placeholder_size: Option<i32>,
-    paintable: Option<gdk::Texture>,
+    paintable: Option<gdk::MemoryTexture>,
 }
 
 #[relm4::component(async pub)]
@@ -35,7 +35,7 @@ impl AsyncComponent for Image {
     type Input = ImageInput;
     type Output = ();
     type Init = ImageInit;
-    type CommandOutput = anyhow::Result<gdk::Texture>;
+    type CommandOutput = anyhow::Result<gdk::MemoryTexture>;
 
     view! {
         adw::Clamp {
@@ -122,18 +122,13 @@ impl AsyncComponent for Image {
 }
 
 impl Image {
-    #[allow(deprecated)]
-    async fn load(source: Option<Url>, size: (i32, i32)) -> anyhow::Result<gdk::Texture> {
+    async fn load(source: Option<Url>, size: (i32, i32)) -> anyhow::Result<gdk::MemoryTexture> {
         if let Some(uri) = source {
             let response = fetch(uri).await?;
             let bytes = response.bytes().await?;
+            let texture = image::load_as_texture(bytes, size)?;
 
-            let pixbuf = image::pixbuf_from_bytes(bytes)?;
-            let scaled_pixbuf = image::scale_pixbuf(pixbuf, size);
-
-            if let Some(pixbuf) = scaled_pixbuf {
-                return Ok(gdk::Texture::for_pixbuf(&pixbuf));
-            }
+            return Ok(texture);
         }
 
         Err(anyhow::Error::msg("Failed to load image"))

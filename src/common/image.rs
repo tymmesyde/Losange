@@ -1,28 +1,44 @@
+use std::io::Cursor;
+
 use color_thief::{get_palette, ColorFormat};
+use gtk::gdk::{MemoryFormat, MemoryTexture};
+use gtk::gdk_pixbuf::Pixbuf;
+use gtk::glib;
 use hsl::HSL;
+use image::ImageReader;
 use itertools::Itertools;
-use relm4::gtk::gdk_pixbuf::{InterpType, Pixbuf};
-use relm4::gtk::glib;
+use relm4::gtk;
+
+pub fn load_as_texture(bytes: bytes::Bytes, size: (i32, i32)) -> anyhow::Result<MemoryTexture> {
+    let cursor = Cursor::new(&bytes);
+    let img = ImageReader::new(cursor).with_guessed_format()?.decode()?;
+
+    let img = if img.width() > size.0 as u32 || img.height() > size.1 as u32 {
+        img.thumbnail(size.0 as u32, size.1 as u32)
+    } else {
+        img
+    };
+
+    let img = img.into_rgba8();
+    let (width, height) = img.dimensions();
+    let stride = width * 4;
+
+    let raw_data = img.into_raw();
+    let data = glib::Bytes::from_owned(raw_data);
+    let texture = MemoryTexture::new(
+        width as i32,
+        height as i32,
+        MemoryFormat::R8g8b8a8,
+        &data,
+        stride as usize,
+    );
+
+    Ok(texture)
+}
 
 pub fn pixbuf_from_bytes<T: AsRef<[u8]> + Send + 'static>(bytes: T) -> Result<Pixbuf, glib::Error> {
     let cursor = std::io::Cursor::new(bytes);
     Pixbuf::from_read(cursor)
-}
-
-pub fn scale_pixbuf(pixbuf: Pixbuf, (width, height): (i32, i32)) -> Option<Pixbuf> {
-    let orig_width = pixbuf.width();
-    let orig_height = pixbuf.height();
-
-    let aspect_ratio = orig_width as f64 / orig_height as f64;
-
-    let (new_width, new_height) =
-        if orig_width as f64 / width as f64 > orig_height as f64 / width as f64 {
-            (width, (width as f64 / aspect_ratio).round() as i32)
-        } else {
-            ((height as f64 * aspect_ratio).round() as i32, height)
-        };
-
-    pixbuf.scale_simple(new_width, new_height, InterpType::Bilinear)
 }
 
 pub fn colors_from_bytes(
