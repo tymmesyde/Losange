@@ -1,22 +1,22 @@
-use std::fmt::Debug;
+pub mod list_item;
+
+use std::{fmt::Debug, time::Duration};
 
 use gtk::prelude::*;
+use list_item::ListItem;
 use relm4::{
-    component, gtk,
-    prelude::{DynamicIndex, FactoryComponent, FactoryVecDeque},
+    component,
+    gtk::{self, glib, NoSelection},
+    typed_view::list::TypedListView,
     ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent,
 };
 
 use crate::components::spinner::Spinner;
 
 #[derive(Debug)]
-pub enum ListItemOutput {
-    Clicked(usize),
-}
-
-#[derive(Debug)]
-pub enum ListInput<I> {
-    Update(Vec<I>),
+pub enum ListInput {
+    Update(Vec<ListItem>),
+    UpdateItems(Vec<ListItem>),
     Clear,
 }
 
@@ -25,33 +25,16 @@ pub enum ListOutput {
     Clicked(usize),
 }
 
-pub struct List<C>
-where
-    C: FactoryComponent<
-        Index = DynamicIndex,
-        ParentWidget = gtk::ListBox,
-        Input = (),
-        Output = ListItemOutput,
-    >,
-    C::Init: Debug + Clone,
-{
+pub struct List {
     scrolled_window: gtk::ScrolledWindow,
-    items: FactoryVecDeque<C>,
+    items: TypedListView<ListItem, NoSelection>,
     loading: bool,
+    debouncer: Option<glib::JoinHandle<()>>,
 }
 
 #[component(pub)]
-impl<C> SimpleComponent for List<C>
-where
-    C: FactoryComponent<
-        Index = DynamicIndex,
-        ParentWidget = gtk::ListBox,
-        Input = (),
-        Output = ListItemOutput,
-    >,
-    C::Init: Debug + Clone,
-{
-    type Input = ListInput<C::Init>;
+impl SimpleComponent for List {
+    type Input = ListInput;
     type Output = ListOutput;
     type Init = ();
 
@@ -70,11 +53,15 @@ where
                         set_expand: true,
 
                         #[local_ref]
-                        items -> gtk::ListBox {
+                        items -> gtk::ListView {
                             add_css_class: relm4::css::classes::BOXED_LIST,
                             set_valign: gtk::Align::Start,
                             set_expand: true,
-                            set_selection_mode: gtk::SelectionMode::None,
+                            set_single_click_activate: true,
+
+                            connect_activate[sender] => move |_, index| {
+                                sender.output_sender().emit(ListOutput::Clicked(index as usize));
+                            }
                         }
                     }
                 }
@@ -89,34 +76,44 @@ where
     ) -> ComponentParts<Self> {
         let scrolled_window = gtk::ScrolledWindow::new();
 
-        let items = FactoryVecDeque::builder()
-            .launch(gtk::ListBox::new())
-            .forward(sender.output_sender(), |msg| match msg {
-                ListItemOutput::Clicked(index) => ListOutput::Clicked(index),
-            });
+        let items = TypedListView::<ListItem, NoSelection>::new();
 
         let model = Self {
             scrolled_window,
             items,
             loading: true,
+            debouncer: None,
         };
 
         let scrolled_window = &model.scrolled_window;
-        let items = model.items.widget();
+        let items = &model.items.view;
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             ListInput::Update(items) => {
-                self.items.guard().clear();
-                self.items.extend(items);
+                if let Some(debouncer) = self.debouncer.take() {
+                    debouncer.abort();
+                }
+
+                self.debouncer = Some(relm4::spawn_local(async move {
+                    tokio::time::sleep(Duration::from_millis(250)).await;
+                    sender.input_sender().emit(ListInput::UpdateItems(items));
+                }));
+            }
+            ListInput::UpdateItems(items) => {
+                self.items.clear();
+                for item in items {
+                    self.items.append(item);
+                }
+
                 self.loading = false;
             }
             ListInput::Clear => {
-                self.items.guard().clear();
+                self.items.clear();
                 self.loading = true;
             }
         }

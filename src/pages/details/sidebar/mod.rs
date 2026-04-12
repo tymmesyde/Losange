@@ -1,36 +1,30 @@
-mod stream_row;
-mod video_row;
-
-use std::time::Duration;
+mod list;
 
 use adw::prelude::*;
 use itertools::Itertools;
+use list::{list_item::ListItem, List, ListOutput};
 use relm4::{
-    adw, css,
-    gtk::{self, glib},
-    Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmWidgetExt,
-    Sender, SimpleComponent,
+    adw, css, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
+    RelmWidgetExt, SimpleComponent,
 };
 use rust_i18n::t;
-use stream_row::StreamRow;
 use stremio_core_losange::{
     models::{
         self,
         meta_details::{MetaDetailsStatus, META_DETAILS_STATE},
     },
     stremio_core::types::resource::StreamSource,
-    types::video::Video,
+    types::{stream::Stream, video::Video},
 };
-use video_row::VideoRow;
 
 use crate::{
     app::AppMsg,
     components::{
         dropdown::{DropDown, DropDownInput, DropDownOutput},
         header_menu::HeaderMenu,
-        list::{List, ListInput, ListOutput},
         spinner::Spinner,
     },
+    pages::details::sidebar::list::ListInput,
     APP_BROKER,
 };
 
@@ -50,12 +44,10 @@ pub struct Sidebar {
     header_menu: Controller<HeaderMenu>,
     selected_season: usize,
     seasons: Controller<DropDown>,
-    videos: Controller<List<VideoRow>>,
-    debounce_videos: Option<glib::JoinHandle<()>>,
+    videos: Controller<List>,
     selected_addon: usize,
     addons: Controller<DropDown>,
-    streams: Controller<List<StreamRow>>,
-    debounce_streams: Option<glib::JoinHandle<()>>,
+    streams: Controller<List>,
     selected_video: Option<Video>,
 }
 
@@ -172,7 +164,7 @@ impl SimpleComponent for Sidebar {
                     DropDownOutput::Selected(index) => SidebarInput::SeasonChanged(index),
                 });
 
-        let videos = List::<VideoRow>::builder()
+        let videos = List::builder()
             .launch(())
             .forward(sender.input_sender(), |msg| match msg {
                 ListOutput::Clicked(index) => SidebarInput::VideoClicked(index),
@@ -185,23 +177,20 @@ impl SimpleComponent for Sidebar {
                     DropDownOutput::Selected(index) => SidebarInput::AddonChanged(index),
                 });
 
-        let streams = List::<StreamRow>::builder().launch(()).forward(
-            sender.input_sender(),
-            |msg| match msg {
+        let streams = List::builder()
+            .launch(())
+            .forward(sender.input_sender(), |msg| match msg {
                 ListOutput::Clicked(index) => SidebarInput::StreamClicked(index),
-            },
-        );
+            });
 
         let model = Sidebar {
             header_menu,
             selected_season: 0,
             seasons,
             videos,
-            debounce_videos: None,
             selected_addon: 0,
             addons,
             streams,
-            debounce_streams: None,
             selected_video: None,
         };
 
@@ -229,8 +218,7 @@ impl SimpleComponent for Sidebar {
                     .collect_vec();
 
                 self.seasons.emit(DropDownInput::Update(seasons));
-
-                self.update_videos(true);
+                self.update_videos(&state.videos);
 
                 let addons = state
                     .streams
@@ -239,8 +227,7 @@ impl SimpleComponent for Sidebar {
                     .collect_vec();
 
                 self.addons.emit(DropDownInput::Update(addons));
-
-                self.update_streams(true);
+                self.update_streams(&state.streams);
             }
             SidebarInput::Clear => {
                 self.videos.emit(ListInput::Clear);
@@ -250,8 +237,9 @@ impl SimpleComponent for Sidebar {
                 APP_BROKER.send(AppMsg::OpenAddons);
             }
             SidebarInput::SeasonChanged(index) => {
+                let state = META_DETAILS_STATE.read_inner();
                 self.selected_season = index;
-                self.update_videos(false);
+                self.update_videos(&state.videos);
             }
             SidebarInput::VideoClicked(index) => {
                 let state = META_DETAILS_STATE.read_inner();
@@ -264,8 +252,9 @@ impl SimpleComponent for Sidebar {
                 }
             }
             SidebarInput::AddonChanged(index) => {
+                let state = META_DETAILS_STATE.read_inner();
                 self.selected_addon = index;
-                self.update_streams(false);
+                self.update_streams(&state.streams);
             }
             SidebarInput::StreamClicked(index) => {
                 let state = META_DETAILS_STATE.read_inner();
@@ -295,49 +284,40 @@ impl SimpleComponent for Sidebar {
 }
 
 impl Sidebar {
-    fn update_videos(&mut self, debounced: bool) {
-        let state = META_DETAILS_STATE.read_inner();
+    fn update_videos(&self, videos: &[(u32, Vec<Video>)]) {
+        if let Some((.., videos)) = videos.get(self.selected_season) {
+            let items = videos
+                .iter()
+                .map(|video| ListItem {
+                    number: video.series_info.as_ref().map_or(0, |info| info.episode),
+                    title: video.name.clone(),
+                    description: video.description.clone(),
+                    icon: None,
+                })
+                .collect_vec();
 
-        if let Some((.., videos)) = state.videos.get(self.selected_season) {
-            Self::update(
-                videos.to_owned(),
-                self.videos.sender().clone(),
-                &mut self.debounce_videos,
-                debounced,
-            );
+            self.videos.emit(ListInput::Update(items));
         }
     }
 
-    fn update_streams(&mut self, debounced: bool) {
-        let state = META_DETAILS_STATE.read_inner();
+    fn update_streams(&self, streams: &[(String, Vec<Stream>)]) {
+        if let Some((.., streams)) = streams.get(self.selected_addon) {
+            let items = streams
+                .iter()
+                .map(|stream| ListItem {
+                    number: 0,
+                    title: stream.name.clone(),
+                    description: stream.description.clone(),
+                    icon: Some(
+                        match matches!(stream.source, StreamSource::External { .. }) {
+                            true => "external-link",
+                            false => "media-playback-start-symbolic",
+                        },
+                    ),
+                })
+                .collect_vec();
 
-        if let Some((.., streams)) = state.streams.get(self.selected_addon) {
-            Self::update(
-                streams.to_owned(),
-                self.streams.sender().clone(),
-                &mut self.debounce_streams,
-                debounced,
-            );
-        }
-    }
-
-    fn update<T: Clone + Send + 'static>(
-        items: Vec<T>,
-        sender: Sender<ListInput<T>>,
-        debouncer: &mut Option<glib::JoinHandle<()>>,
-        debounced: bool,
-    ) {
-        if debounced {
-            if let Some(debounce) = debouncer.take() {
-                debounce.abort();
-            }
-
-            *debouncer = Some(relm4::spawn_local(async move {
-                tokio::time::sleep(Duration::from_millis(250)).await;
-                sender.emit(ListInput::Update(items));
-            }));
-        } else {
-            sender.emit(ListInput::Update(items));
+            self.streams.emit(ListInput::Update(items));
         }
     }
 }
