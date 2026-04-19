@@ -118,9 +118,7 @@ impl RelmListItem for ListItem {
 
         icon.set_icon_name(Some(self.icon));
 
-        let progress_value = self
-            .progress
-            .map_or(0.0, |progress| progress.div(100.0).into());
+        let progress_value = self.progress.map_or(0.0, |progress| progress.div(100.0));
         progress.set_fraction(progress_value);
         progress.set_visible(progress_value > 0.0);
     }
