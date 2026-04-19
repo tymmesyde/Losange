@@ -43,6 +43,7 @@ pub enum SidebarInput {
 
 pub struct Sidebar {
     header_menu: Controller<HeaderMenu>,
+    default_season: bool,
     selected_season: usize,
     seasons: Controller<DropDown>,
     videos: Controller<List>,
@@ -186,6 +187,7 @@ impl SimpleComponent for Sidebar {
 
         let model = Sidebar {
             header_menu,
+            default_season: true,
             selected_season: 0,
             seasons,
             videos,
@@ -220,16 +222,18 @@ impl SimpleComponent for Sidebar {
 
                 self.seasons.emit(DropDownInput::Update(seasons));
 
-                let season_index = state.last_watched.as_ref().and_then(|last_watched| {
-                    state
-                        .videos
-                        .iter()
-                        .position(|(season, _)| Some(season) == last_watched.season.as_ref())
-                });
+                if self.default_season {
+                    let season_index = state.last_watched.as_ref().and_then(|last_watched| {
+                        state
+                            .videos
+                            .iter()
+                            .position(|(season, _)| Some(season) == last_watched.season.as_ref())
+                    });
 
-                if let Some(index) = season_index {
-                    self.seasons.emit(DropDownInput::Select(index));
-                    self.selected_season = index;
+                    if let Some(index) = season_index {
+                        self.seasons.emit(DropDownInput::Select(index));
+                        self.selected_season = index;
+                    }
                 }
 
                 self.update_videos(&state.videos, &state.last_watched);
@@ -252,6 +256,7 @@ impl SimpleComponent for Sidebar {
             }
             SidebarInput::SeasonChanged(index) => {
                 let state = META_DETAILS_STATE.read_inner();
+                self.default_season = false;
                 self.selected_season = index;
                 self.update_videos(&state.videos, &state.last_watched);
             }
