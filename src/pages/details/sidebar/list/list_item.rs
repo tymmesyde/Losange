@@ -14,7 +14,7 @@ pub struct ListItem {
     pub number: u32,
     pub title: String,
     pub description: String,
-    pub icon: Option<&'static str>,
+    pub icon: &'static str,
 }
 
 pub struct Widgets {
@@ -100,6 +100,6 @@ impl RelmListItem for ListItem {
         description.set_label(&self.description.no_line_breaks());
         description.set_visible(!self.description.is_empty());
 
-        icon.set_icon_name(self.icon);
+        icon.set_icon_name(Some(self.icon));
     }
 }

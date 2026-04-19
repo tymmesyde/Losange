@@ -303,7 +303,7 @@ impl Sidebar {
                     number: video.series_info.as_ref().map_or(0, |info| info.episode),
                     title: video.name.clone(),
                     description: video.description.clone(),
-                    icon: None,
+                    icon: "right",
                 })
                 .collect_vec();
 
@@ -319,12 +319,10 @@ impl Sidebar {
                     number: 0,
                     title: stream.name.clone(),
                     description: stream.description.clone(),
-                    icon: Some(
-                        match matches!(stream.source, StreamSource::External { .. }) {
-                            true => "external-link",
-                            false => "media-playback-start-symbolic",
-                        },
-                    ),
+                    icon: match matches!(stream.source, StreamSource::External { .. }) {
+                        true => "external-link",
+                        false => "media-playback-start-symbolic",
+                    },
                 })
                 .collect_vec();
 
