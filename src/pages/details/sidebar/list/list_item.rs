@@ -1,4 +1,8 @@
+use std::ops::Div;
+
+use ordered_float::NotNan;
 use relm4::{
+    css,
     gtk::{
         self,
         prelude::{BoxExt, OrientableExt, WidgetExt},
@@ -9,12 +13,13 @@ use relm4::{
 
 use crate::common::format::Format;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ListItem {
     pub number: u32,
     pub title: String,
     pub description: String,
     pub icon: &'static str,
+    pub progress: Option<NotNan<f64>>,
 }
 
 pub struct Widgets {
@@ -22,6 +27,7 @@ pub struct Widgets {
     title: gtk::Label,
     description: gtk::Label,
     icon: gtk::Image,
+    progress: gtk::ProgressBar,
 }
 
 impl RelmListItem for ListItem {
@@ -31,6 +37,7 @@ impl RelmListItem for ListItem {
     fn setup(_item: &gtk::ListItem) -> (gtk::Box, Widgets) {
         view! {
             root = gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
                 set_height_request: 64,
                 set_expand: true,
                 set_focusable: true,
@@ -38,6 +45,7 @@ impl RelmListItem for ListItem {
                 gtk::Box {
                     set_margin_horizontal: 12,
                     set_spacing: 12,
+                    set_expand: true,
 
                     #[name = "number"]
                     gtk::Label {
@@ -71,6 +79,12 @@ impl RelmListItem for ListItem {
                     gtk::Image {
                         set_width_request: 30,
                     },
+                },
+
+                #[name = "progress"]
+                gtk::ProgressBar {
+                    add_css_class: css::classes::OSD,
+                    set_valign: gtk::Align::End,
                 }
             },
         }
@@ -80,6 +94,7 @@ impl RelmListItem for ListItem {
             title,
             description,
             icon,
+            progress,
         };
 
         (root, widgets)
@@ -91,6 +106,7 @@ impl RelmListItem for ListItem {
             title,
             description,
             icon,
+            progress,
         } = widgets;
 
         number.set_label(&self.number.to_string());
@@ -101,5 +117,11 @@ impl RelmListItem for ListItem {
         description.set_visible(!self.description.is_empty());
 
         icon.set_icon_name(Some(self.icon));
+
+        let progress_value = self
+            .progress
+            .map_or(0.0, |progress| progress.div(100.0).into());
+        progress.set_fraction(progress_value);
+        progress.set_visible(progress_value > 0.0);
     }
 }

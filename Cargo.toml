@@ -31,6 +31,7 @@ libloading = "0.9.0"
 libmpv2 = "5.0.3"
 mpris-server = "0.9.0"
 open = "5.3.3"
+ordered-float = "5.3.0"
 relm4 = { version = "0.11.0", features = ["libadwaita", "gnome_49"] }
 relm4-icons = "0.11.0"
 reqwest = { version = "0.12.28", features = ["rustls-tls", "http2", "json"] }

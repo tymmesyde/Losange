@@ -3,6 +3,7 @@ mod list;
 use adw::prelude::*;
 use itertools::Itertools;
 use list::{list_item::ListItem, List, ListOutput};
+use ordered_float::NotNan;
 use relm4::{
     adw, css, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
     RelmWidgetExt, SimpleComponent,
@@ -11,7 +12,7 @@ use rust_i18n::t;
 use stremio_core_losange::{
     models::{
         self,
-        meta_details::{MetaDetailsStatus, META_DETAILS_STATE},
+        meta_details::{LastWatched, MetaDetailsStatus, META_DETAILS_STATE},
     },
     stremio_core::types::resource::StreamSource,
     types::{stream::Stream, video::Video},
@@ -218,7 +219,20 @@ impl SimpleComponent for Sidebar {
                     .collect_vec();
 
                 self.seasons.emit(DropDownInput::Update(seasons));
-                self.update_videos(&state.videos);
+
+                let season_index = state.last_watched.as_ref().and_then(|last_watched| {
+                    state
+                        .videos
+                        .iter()
+                        .position(|(season, _)| Some(season) == last_watched.season.as_ref())
+                });
+
+                if let Some(index) = season_index {
+                    self.seasons.emit(DropDownInput::Select(index));
+                    self.selected_season = index;
+                }
+
+                self.update_videos(&state.videos, &state.last_watched);
 
                 let addons = state
                     .streams
@@ -228,17 +242,6 @@ impl SimpleComponent for Sidebar {
 
                 self.addons.emit(DropDownInput::Update(addons));
                 self.update_streams(&state.streams);
-
-                let season_index = state.series_info.as_ref().and_then(|series_info| {
-                    state
-                        .videos
-                        .iter()
-                        .position(|(season, _)| season == &series_info.season)
-                });
-
-                if let Some(index) = season_index {
-                    self.seasons.emit(DropDownInput::Select(index));
-                }
             }
             SidebarInput::Clear => {
                 self.videos.emit(ListInput::Clear);
@@ -250,7 +253,7 @@ impl SimpleComponent for Sidebar {
             SidebarInput::SeasonChanged(index) => {
                 let state = META_DETAILS_STATE.read_inner();
                 self.selected_season = index;
-                self.update_videos(&state.videos);
+                self.update_videos(&state.videos, &state.last_watched);
             }
             SidebarInput::VideoClicked(index) => {
                 let state = META_DETAILS_STATE.read_inner();
@@ -295,14 +298,18 @@ impl SimpleComponent for Sidebar {
 }
 
 impl Sidebar {
-    fn update_videos(&self, videos: &[(u32, Vec<Video>)]) {
+    fn update_videos(&self, videos: &[(u32, Vec<Video>)], last_watched: &Option<LastWatched>) {
         if let Some((.., videos)) = videos.get(self.selected_season) {
             let items = videos
                 .iter()
                 .map(|video| ListItem {
-                    number: video.series_info.as_ref().map_or(0, |info| info.episode),
+                    number: video.episode.map_or(0, |episode| episode),
                     title: video.name.clone(),
                     description: video.description.clone(),
+                    progress: last_watched.as_ref().and_then(|last_watched| {
+                        (last_watched.id == video.id)
+                            .then_some(NotNan::new(last_watched.progress).unwrap())
+                    }),
                     icon: "right",
                 })
                 .collect_vec();
@@ -316,13 +323,13 @@ impl Sidebar {
             let items = streams
                 .iter()
                 .map(|stream| ListItem {
-                    number: 0,
                     title: stream.name.clone(),
                     description: stream.description.clone(),
                     icon: match matches!(stream.source, StreamSource::External { .. }) {
                         true => "external-link",
                         false => "media-playback-start-symbolic",
                     },
+                    ..Default::default()
                 })
                 .collect_vec();
 
