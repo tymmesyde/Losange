@@ -8,7 +8,10 @@ use stremio_core::{
         meta_details::{MetaDetails, Selected},
     },
     runtime::msg::{Action, ActionCtx, ActionLoad},
-    types::{addon::ResourcePath, resource::MetaItem},
+    types::{
+        addon::ResourcePath,
+        resource::{MetaItem, SeriesInfo},
+    },
 };
 
 use crate::{
@@ -30,6 +33,8 @@ pub struct MetaDetailsState {
     pub status: MetaDetailsStatus,
     pub meta_item: Option<MetaItem>,
     pub item: Option<Item>,
+    pub video_id: Option<String>,
+    pub series_info: Option<SeriesInfo>,
     pub videos: Vec<(u32, Vec<Video>)>,
     pub streams_loading: bool,
     pub streams: Vec<(String, Vec<Stream>)>,
@@ -112,6 +117,18 @@ pub fn update(meta_details: &MetaDetails, ctx: &Ctx) {
         .as_ref()
         .is_some_and(|library_item| !library_item.temp && !library_item.removed);
 
+    let video_id = meta_details
+        .library_item
+        .as_ref()
+        .and_then(|library_item| library_item.state.video_id.clone());
+
+    let series_info = meta_item.and_then(|item| {
+        item.videos
+            .iter()
+            .find(|video| Some(&video.id) == video_id.as_ref())
+            .and_then(|video| video.series_info.clone())
+    });
+
     let status = if streams.is_empty() {
         if streams_loading {
             MetaDetailsStatus::Loading
@@ -126,6 +143,8 @@ pub fn update(meta_details: &MetaDetails, ctx: &Ctx) {
     state.status = status;
     state.meta_item = meta_item.cloned();
     state.item = item;
+    state.video_id = video_id;
+    state.series_info = series_info;
     state.videos = videos;
     state.streams = streams;
     state.in_library = in_library;

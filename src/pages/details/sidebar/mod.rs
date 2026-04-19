@@ -228,6 +228,17 @@ impl SimpleComponent for Sidebar {
 
                 self.addons.emit(DropDownInput::Update(addons));
                 self.update_streams(&state.streams);
+
+                let season_index = state.series_info.as_ref().and_then(|series_info| {
+                    state
+                        .videos
+                        .iter()
+                        .position(|(season, _)| season == &series_info.season)
+                });
+
+                if let Some(index) = season_index {
+                    self.seasons.emit(DropDownInput::Select(index));
+                }
             }
             SidebarInput::Clear => {
                 self.videos.emit(ListInput::Clear);
