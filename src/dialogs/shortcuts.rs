@@ -32,6 +32,10 @@ impl SimpleComponent for ShortcutsDialog {
             &t!("shortcut_preferences"),
             "<Control>comma",
         ));
+        general_section.add(adw::ShortcutsItem::new(
+            &t!("shortcut_quit"),
+            "<Control>Q",
+        ));
 
         let player_section = adw::ShortcutsSection::new(Some(&t!("player")));
         player_section.add(adw::ShortcutsItem::new(&t!("shortcut_play_pause"), "space"));

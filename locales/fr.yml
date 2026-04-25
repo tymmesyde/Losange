@@ -11,6 +11,7 @@ auto_play: Lire automatiquement la prochaine vidéo
 
 shortcut_search: Ouvir la Recherche
 shortcut_preferences: Editer les Préférences
+shortcut_quit: Quitter l'application
 shortcut_play_pause: Lecture / Pause
 shortcut_seek_backward: Reculer dans la lecture
 shortcut_seek_forward: Avancer dans la lecture

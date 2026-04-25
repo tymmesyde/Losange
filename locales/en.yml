@@ -11,6 +11,7 @@ auto_play: Auto play next video
 
 shortcut_search: Open Search
 shortcut_preferences: Edit Preferences
+shortcut_quit: Quit application
 shortcut_play_pause: Play / Pause
 shortcut_seek_backward: Seek backward
 shortcut_seek_forward: Seek forward
