@@ -24,6 +24,7 @@ catalog_addon_name: Display addon name
 details: Details
 details_content_colors: Display content background colors
 details_content_logo: Display content logo
+player_resize_window: Resize player window to video dimensions
 
 player: Player
 subtitles_size: Subtitles size

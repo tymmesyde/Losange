@@ -7,8 +7,10 @@ use adw::prelude::*;
 use gtk::glib;
 use relm4::{
     actions::{ActionGroupName, ActionName, RelmAction, RelmActionGroup},
-    adw, css, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
-    JoinHandle, RelmWidgetExt, SimpleComponent,
+    adw, css,
+    gtk::{self, gio},
+    Component, ComponentController, ComponentParts, ComponentSender, Controller, JoinHandle,
+    RelmWidgetExt, SimpleComponent,
 };
 use rust_i18n::t;
 use stremio_core_losange::{
@@ -20,7 +22,10 @@ use tokio::time::sleep;
 use tracks_menu::{TracksMenu, TracksMenuInput, TracksMenuOutput};
 use video::{Video, VideoInput, VideoOutput, VIDEO_STATE};
 
-use crate::{app::AppMsg, components::spinner::Spinner, APP_BROKER};
+use crate::{
+    app::AppMsg, common::window::WindowExt, components::spinner::Spinner, constants::APP_ID,
+    APP_BROKER,
+};
 
 relm4::new_action_group!(pub(super) PlayerActionGroup, "player");
 relm4::new_stateless_action!(pub(super) PlayPauseAction, PlayerActionGroup, "play_pause");
@@ -54,11 +59,13 @@ pub enum PlayerInput {
     PauseChanged(bool),
     TimeChanged(f64, f64),
     TracksChanged,
+    SizeChanged((i64, i64)),
     Ended,
     Error,
 }
 
 pub struct Player {
+    settings: gio::Settings,
     video: Controller<Video>,
     immersed: bool,
     fullscreen: bool,
@@ -70,6 +77,7 @@ pub struct Player {
     text_tracks_menu: Controller<TracksMenu>,
     audio_tracks_menu: Controller<TracksMenu>,
     statistics_task: Option<JoinHandle<()>>,
+    default_window_size: Option<(f64, f64)>,
 }
 
 #[relm4::component(pub)]
@@ -309,6 +317,8 @@ impl SimpleComponent for Player {
         CTX_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateVideo);
         PLAYER_STATE.subscribe(sender.input_sender(), |_| PlayerInput::UpdateVideo);
 
+        let settings = gio::Settings::new(APP_ID);
+
         let video = Video::builder()
             .launch(())
             .forward(sender.input_sender(), |msg| match msg {
@@ -317,6 +327,7 @@ impl SimpleComponent for Player {
                     PlayerInput::TimeChanged(time, duration)
                 }
                 VideoOutput::TracksChanged => PlayerInput::TracksChanged,
+                VideoOutput::SizeChanged(size) => PlayerInput::SizeChanged(size),
                 VideoOutput::Ended => PlayerInput::Ended,
                 VideoOutput::Error => PlayerInput::Error,
             });
@@ -339,6 +350,7 @@ impl SimpleComponent for Player {
                 });
 
         let model = Player {
+            settings,
             video,
             immersed: false,
             fullscreen: false,
@@ -350,6 +362,7 @@ impl SimpleComponent for Player {
             text_tracks_menu,
             audio_tracks_menu,
             statistics_task: None,
+            default_window_size: None,
         };
 
         let play_pause_action = {
@@ -417,6 +430,15 @@ impl SimpleComponent for Player {
             PlayerInput::Unload => {
                 models::player::unload();
                 self.video.emit(VideoInput::Unload);
+
+                if self.settings.boolean("player-resize-window") {
+                    if let Some((width, height)) = self.default_window_size.take() {
+                        if let Some(window) = relm4::main_application().active_window() {
+                            window.animate_width(width);
+                            window.animate_height(height);
+                        }
+                    }
+                }
             }
             PlayerInput::UpdateVideo => {
                 let ctx = CTX_STATE.read_inner();
@@ -581,6 +603,27 @@ impl SimpleComponent for Player {
                     if let Some(track) = &state.audio_track {
                         if let Ok(id) = track.id.parse::<i64>() {
                             self.video.emit(VideoInput::AudioTrack(id));
+                        }
+                    }
+                }
+            }
+            PlayerInput::SizeChanged((video_width, video_height)) => {
+                if self.settings.boolean("player-resize-window") {
+                    if let Some(window) = relm4::main_application().active_window() {
+                        if video_width > 0 && video_height > 0 {
+                            let (window_width, window_height) = window.dimensions();
+                            self.default_window_size = Some((window_width, window_height));
+
+                            let video_ratio = video_width as f64 / video_height as f64;
+                            let window_ratio = window_width / window_height;
+
+                            if window_ratio < video_ratio {
+                                let new_height = (window_width / video_ratio).round();
+                                window.animate_height(new_height);
+                            } else {
+                                let new_width = (window_height * video_ratio).round();
+                                window.animate_width(new_width);
+                            }
                         }
                     }
                 }

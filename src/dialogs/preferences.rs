@@ -24,6 +24,7 @@ pub enum PreferencesDialogInput {
     ContentTitlesBelowChanged(bool),
     DetailsContentColorsChanged(bool),
     DetailsContentLogoChanged(bool),
+    PlayerResizeWindow(bool),
     PlayerSubtitlesSizeChanged(f64),
     PlayerSubtitlesOffsetChanged(f64),
     PlayerSubtitlesColor(String),
@@ -106,6 +107,19 @@ impl Component for PreferencesDialog {
                         connect_active_notify[sender] => move |row| {
                             let value = row.is_active();
                             sender.input(PreferencesDialogInput::DetailsContentLogoChanged(value));
+                        }
+                    },
+                },
+
+                add = &adw::PreferencesGroup {
+                    set_title: &t!("player"),
+
+                    adw::SwitchRow {
+                        set_title: &t!("player_resize_window"),
+                        set_active: model.settings.boolean("player-resize-window"),
+                        connect_active_notify[sender] => move |row| {
+                            let value = row.is_active();
+                            sender.input(PreferencesDialogInput::PlayerResizeWindow(value));
                         }
                     },
                 }
@@ -295,6 +309,9 @@ impl Component for PreferencesDialog {
             }
             PreferencesDialogInput::DetailsContentLogoChanged(value) => {
                 let _ = self.settings.set_boolean("details-content-logo", value);
+            }
+            PreferencesDialogInput::PlayerResizeWindow(value) => {
+                let _ = self.settings.set_boolean("player-resize-window", value);
             }
             PreferencesDialogInput::PlayerSubtitlesSizeChanged(value) => {
                 models::ctx::update_settings(|mut settings| {

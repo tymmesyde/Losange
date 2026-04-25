@@ -47,6 +47,8 @@ pub struct VideoState {
     pub buffering: bool,
     pub text_tracks: Vec<MediaTrack>,
     pub audio_tracks: Vec<MediaTrack>,
+    pub width: i64,
+    pub height: i64,
 }
 
 pub static VIDEO_STATE: SharedState<VideoState> = SharedState::new();
@@ -73,6 +75,7 @@ pub enum VideoOutput {
     PauseChanged(bool),
     TimeChanged(f64, f64),
     TracksChanged,
+    SizeChanged((i64, i64)),
     Ended,
     Error,
 }
@@ -210,6 +213,8 @@ impl SimpleComponent for Video {
             VideoInput::Unload => {
                 let mut state = VIDEO_STATE.write();
                 state.loaded = false;
+                state.height = 0;
+                state.width = 0;
 
                 self.stop();
             }
@@ -283,6 +288,8 @@ impl Video {
         mpv.observe_property("cache-buffering-state", Format::Int64, 0)
             .ok();
         mpv.observe_property("track-list", Format::String, 0).ok();
+        mpv.observe_property("width", Format::Int64, 0).ok();
+        mpv.observe_property("height", Format::Int64, 0).ok();
 
         Ok(mpv)
     }
@@ -317,9 +324,22 @@ impl Video {
                                 "volume" => state.volume = value,
                                 _ => {}
                             },
-                            PropertyData::Int64(value) if name == "cache-buffering-state" => {
-                                state.buffering = value < 100;
-                            }
+                            PropertyData::Int64(value) => match name {
+                                "cache-buffering-state" => state.buffering = value < 100,
+                                "width" => {
+                                    state.width = value;
+                                    sender
+                                        .output_sender()
+                                        .emit(VideoOutput::SizeChanged((value, state.height)))
+                                }
+                                "height" => {
+                                    state.height = value;
+                                    sender
+                                        .output_sender()
+                                        .emit(VideoOutput::SizeChanged((state.width, value)))
+                                }
+                                _ => {}
+                            },
                             PropertyData::Str(value) if name == "track-list" => {
                                 if let Ok(list) = serde_json::from_str::<Vec<Track>>(value) {
                                     let (text, audio) = Self::create_media_tracks(list);

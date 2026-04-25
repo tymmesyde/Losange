@@ -24,6 +24,7 @@ catalog_addon_name: Afficher le nom de l'addon
 details: Détails
 details_content_colors: Afficher les couleurs d'arrière-plan du contenu
 details_content_logo: Afficher le logo du contenu
+player_resize_window: Redimensionner la fenêtre du lecteur aux dimensions de la vidéo
 
 player: Lecteur
 subtitles_size: Taille des sous-titres
