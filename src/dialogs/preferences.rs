@@ -1,9 +1,16 @@
-use crate::constants::{
-    APP_ID, SUBTITLES_MAX_OFFSET, SUBTITLES_MAX_SIZE, SUBTITLES_MIN_OFFSET, SUBTITLES_MIN_SIZE,
+use crate::{
+    common::style::ColorHexExt,
+    constants::{
+        APP_ID, SUBTITLES_MAX_OFFSET, SUBTITLES_MAX_SIZE, SUBTITLES_MIN_OFFSET, SUBTITLES_MIN_SIZE,
+    },
 };
 use adw::prelude::*;
 use gtk::gio;
-use relm4::{adw, gtk, Component, ComponentParts, ComponentSender};
+use relm4::{
+    adw, css,
+    gtk::{self, gdk},
+    Component, ComponentParts, ComponentSender,
+};
 use rust_i18n::t;
 use stremio_core_losange::models::{self, ctx::CTX_STATE, server::SERVER_STATE};
 use url::Url;
@@ -19,6 +26,8 @@ pub enum PreferencesDialogInput {
     DetailsContentLogoChanged(bool),
     PlayerSubtitlesSizeChanged(f64),
     PlayerSubtitlesOffsetChanged(f64),
+    PlayerSubtitlesColor(String),
+    PlayerSubtitlesOultineColor(String),
     PlayerAutoPlayChanged(bool),
     ServerUrlChanged(String),
     ServerEnabledChanged(bool),
@@ -26,6 +35,7 @@ pub enum PreferencesDialogInput {
 
 pub struct PreferencesDialog {
     settings: gio::Settings,
+    subtitles_color_dialog: gtk::ColorDialog,
 }
 
 #[relm4::component(pub)]
@@ -134,7 +144,44 @@ impl Component for PreferencesDialog {
                             sender.input(PreferencesDialogInput::PlayerSubtitlesOffsetChanged(value));
                         } @subtitles_offset_handler,
                     },
+                    adw::ActionRow {
+                        set_title: &t!("subtitles_color"),
 
+                        add_suffix = &gtk::ColorDialogButton {
+                            add_css_class: css::classes::FLAT,
+                            set_valign: gtk::Align::Center,
+                            set_dialog: &model.subtitles_color_dialog,
+
+                            #[watch]
+                            #[block_signal(subtitles_color_handler)]
+                            set_rgba: &gdk::RGBA::parse_hex(&ctx.settings.subtitles_text_color)
+                                .expect("Failed to parse subtitles color setting"),
+
+                            connect_rgba_notify[sender] => move |button| {
+                                let value = button.rgba().to_hex();
+                                sender.input(PreferencesDialogInput::PlayerSubtitlesColor(value));
+                            } @subtitles_color_handler,
+                        }
+                    },
+                    adw::ActionRow {
+                        set_title: &t!("subtitles_outline_color"),
+
+                        add_suffix = &gtk::ColorDialogButton {
+                            add_css_class: css::classes::FLAT,
+                            set_valign: gtk::Align::Center,
+                            set_dialog: &model.subtitles_color_dialog,
+
+                            #[watch]
+                            #[block_signal(subtitles_outline_color_handler)]
+                            set_rgba: &gdk::RGBA::parse_hex(&ctx.settings.subtitles_outline_color)
+                                .expect("Failed to parse subtitles outline color setting"),
+
+                            connect_rgba_notify[sender] => move |button| {
+                                let value = button.rgba().to_hex();
+                                sender.input(PreferencesDialogInput::PlayerSubtitlesOultineColor(value));
+                            } @subtitles_outline_color_handler,
+                        }
+                    },
                 },
 
                 add = &adw::PreferencesGroup {
@@ -205,7 +252,12 @@ impl Component for PreferencesDialog {
 
         let settings = gio::Settings::new(APP_ID);
 
-        let model = Self { settings };
+        let subtitles_color_dialog = gtk::ColorDialog::builder().build();
+
+        let model = Self {
+            settings,
+            subtitles_color_dialog,
+        };
 
         let widgets = view_output!();
 
@@ -253,6 +305,18 @@ impl Component for PreferencesDialog {
             PreferencesDialogInput::PlayerSubtitlesOffsetChanged(value) => {
                 models::ctx::update_settings(|mut settings| {
                     settings.subtitles_offset = value as u8;
+                    settings
+                });
+            }
+            PreferencesDialogInput::PlayerSubtitlesColor(color) => {
+                models::ctx::update_settings(|mut settings| {
+                    settings.subtitles_text_color = color;
+                    settings
+                });
+            }
+            PreferencesDialogInput::PlayerSubtitlesOultineColor(color) => {
+                models::ctx::update_settings(|mut settings| {
+                    settings.subtitles_outline_color = color;
                     settings
                 });
             }

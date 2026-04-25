@@ -64,6 +64,8 @@ pub enum VideoInput {
     AudioTrack(i64),
     SubtitlesSize(f64),
     SubtitlesPosition(f64),
+    SubtitlesColor(String),
+    SubtitlesOutlineColor(String),
 }
 
 #[derive(Debug)]
@@ -234,6 +236,12 @@ impl SimpleComponent for Video {
             }
             VideoInput::SubtitlesPosition(position) => {
                 self.set_subtitles_position(position);
+            }
+            VideoInput::SubtitlesColor(color) => {
+                self.set_subtitles_color(color);
+            }
+            VideoInput::SubtitlesOutlineColor(color) => {
+                self.set_subtitles_outline_color(color);
             }
         }
     }
@@ -467,6 +475,18 @@ impl Video {
     fn set_subtitles_position(&self, position: f64) {
         if let Err(e) = self.mpv.borrow().set_property("sub-pos", position) {
             error!("Failed to set subtitles position: {e}");
+        }
+    }
+
+    fn set_subtitles_color(&self, color: String) {
+        if let Err(e) = self.mpv.borrow().set_property("sub-color", color) {
+            error!("Failed to set subtitles color: {e}");
+        }
+    }
+
+    fn set_subtitles_outline_color(&self, color: String) {
+        if let Err(e) = self.mpv.borrow().set_property("sub-border-color", color) {
+            error!("Failed to set subtitles outline color: {e}");
         }
     }
 }

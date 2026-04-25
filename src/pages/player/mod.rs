@@ -440,6 +440,13 @@ impl SimpleComponent for Player {
                 let position = 100.0 - ctx.settings.subtitles_offset as f64;
                 self.video.emit(VideoInput::SubtitlesPosition(position));
 
+                let color = ctx.settings.subtitles_text_color.to_owned();
+                self.video.emit(VideoInput::SubtitlesColor(color));
+
+                let outline_color = ctx.settings.subtitles_outline_color.to_owned();
+                self.video
+                    .emit(VideoInput::SubtitlesOutlineColor(outline_color));
+
                 APP_BROKER.sender().emit(AppMsg::MediaMetadata((
                     player.title.to_owned(),
                     player.image.to_owned(),
