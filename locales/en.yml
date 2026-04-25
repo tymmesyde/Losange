@@ -16,6 +16,8 @@ shortcut_seek_backward: Seek backward
 shortcut_seek_forward: Seek forward
 shortcut_increase_volume: Increase volume
 shortcut_decrease_volume: Decrease volume
+shortcut_toggle_fullscreen: Toggle fullscreen
+shortcut_exit_fullscreen: Exit fullscreen
 
 appereance: Appearance
 general: General

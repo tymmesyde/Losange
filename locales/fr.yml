@@ -16,6 +16,7 @@ shortcut_seek_backward: Reculer dans la lecture
 shortcut_seek_forward: Avancer dans la lecture
 shortcut_increase_volume: Augmenter le volume
 shortcut_decrease_volume: Réduire le volume
+shortcut_exit_fullscreen: Quitter le mode plein écran
 
 appereance: Apparence
 general: Général

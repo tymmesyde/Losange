@@ -33,6 +33,8 @@ relm4::new_stateless_action!(pub(super) SeekPrevAction, PlayerActionGroup, "seek
 relm4::new_stateless_action!(pub(super) SeekNextAction, PlayerActionGroup, "seek_next");
 relm4::new_stateless_action!(pub(super) VolumeUp, PlayerActionGroup, "volume_up");
 relm4::new_stateless_action!(pub(super) VolumeDown, PlayerActionGroup, "volume_down");
+relm4::new_stateless_action!(pub(super) ToggleFullscreen, PlayerActionGroup, "toggle_fullscreen");
+relm4::new_stateless_action!(pub(super) Exit, PlayerActionGroup, "exit");
 
 const SHORTCUTS: &[(&str, &str, &str)] = &[
     ("space", PlayerActionGroup::NAME, PlayPauseAction::NAME),
@@ -40,6 +42,8 @@ const SHORTCUTS: &[(&str, &str, &str)] = &[
     ("Right", PlayerActionGroup::NAME, SeekNextAction::NAME),
     ("Up", PlayerActionGroup::NAME, VolumeUp::NAME),
     ("Down", PlayerActionGroup::NAME, VolumeDown::NAME),
+    ("F", PlayerActionGroup::NAME, ToggleFullscreen::NAME),
+    ("Escape", PlayerActionGroup::NAME, Exit::NAME),
 ];
 
 #[derive(Debug)]
@@ -60,6 +64,7 @@ pub enum PlayerInput {
     TextTrackChanged(i64),
     AudioTrackChanged(i64),
     Fullscreen,
+    Exit,
     PauseChanged(bool),
     TimeChanged(f64, f64),
     TracksChanged,
@@ -404,12 +409,28 @@ impl SimpleComponent for Player {
             })
         };
 
+        let toggle_fullscreen_action = {
+            let sender = sender.input_sender().clone();
+            RelmAction::<ToggleFullscreen>::new_stateless(move |_| {
+                sender.emit(PlayerInput::Fullscreen);
+            })
+        };
+
+        let exit_action = {
+            let sender = sender.input_sender().clone();
+            RelmAction::<Exit>::new_stateless(move |_| {
+                sender.emit(PlayerInput::Exit);
+            })
+        };
+
         let mut actions = RelmActionGroup::<PlayerActionGroup>::new();
         actions.add_action(play_pause_action);
         actions.add_action(seek_prev_action);
         actions.add_action(seek_next_action);
         actions.add_action(volume_up_action);
         actions.add_action(volume_down_action);
+        actions.add_action(toggle_fullscreen_action);
+        actions.add_action(exit_action);
 
         if let Some(window) = relm4::main_application().active_window() {
             actions.register_for_widget(window);
@@ -595,6 +616,15 @@ impl SimpleComponent for Player {
                 if let Some(window) = relm4::main_application().active_window() {
                     self.fullscreen = !window.is_fullscreen();
                     window.set_fullscreened(self.fullscreen);
+                }
+            }
+            PlayerInput::Exit => {
+                if let Some(window) = relm4::main_application().active_window() {
+                    if window.is_fullscreen() {
+                        window.set_fullscreened(false);
+                    } else {
+                        APP_BROKER.send(AppMsg::NavigateBack) ;
+                    }
                 }
             }
             PlayerInput::PauseChanged(paused) => {

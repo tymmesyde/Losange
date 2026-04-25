@@ -51,6 +51,14 @@ impl SimpleComponent for ShortcutsDialog {
             &t!("shortcut_decrease_volume"),
             "Down",
         ));
+        player_section.add(adw::ShortcutsItem::new(
+            &t!("shortcut_toggle_fullscreen"),
+            "F",
+        ));
+        player_section.add(adw::ShortcutsItem::new(
+            &t!("shortcut_exit_fullscreen"),
+            "Escape",
+        ));
 
         widgets.add(general_section);
         widgets.add(player_section);
