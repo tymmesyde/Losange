@@ -7,7 +7,7 @@ use adw::prelude::*;
 use gtk::glib;
 use relm4::{
     actions::{ActionGroupName, ActionName, RelmAction, RelmActionGroup},
-    adw, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
+    adw, css, gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
     JoinHandle, RelmWidgetExt, SimpleComponent,
 };
 use rust_i18n::t;
@@ -119,6 +119,8 @@ impl SimpleComponent for Player {
 
                             #[wrap(Some)]
                             set_title_widget = &gtk::Label {
+                                add_css_class: css::classes::HEADING,
+
                                 #[watch]
                                 set_label: &player.title,
                             },
@@ -174,7 +176,7 @@ impl SimpleComponent for Player {
                         set_reveal_child: state.paused || !model.immersed,
 
                         gtk::Box {
-                            set_css_classes: &[relm4::css::classes::OSD, relm4::css::classes::TOOLBAR],
+                            add_css_class: relm4::css::classes::TOOLBAR,
                             set_valign: gtk::Align::End,
                             set_margin_all: 12,
 
@@ -239,8 +241,10 @@ impl SimpleComponent for Player {
                             },
 
                             gtk::Label {
+                                add_css_class: css::classes::HEADING,
                                 set_align: gtk::Align::Center,
                                 set_width_request: 80,
+
                                 #[watch]
                                 set_label: &Self::ms_to_clock(state.time),
                             },
@@ -263,6 +267,7 @@ impl SimpleComponent for Player {
                             },
 
                             gtk::Label {
+                                add_css_class: css::classes::HEADING,
                                 set_align: gtk::Align::Center,
                                 set_width_request: 80,
 
