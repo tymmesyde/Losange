@@ -589,7 +589,7 @@ impl SimpleComponent for Player {
                 models::player::update_seek_time(time, state.duration);
             }
             PlayerInput::Volume(amount) => {
-                let volume = self.volume.value() + amount;
+                let volume = (self.volume.value() + amount).clamp(0.0, VOLUME_MAX);
 
                 if amount != 0.0 {
                     let message = format!("{} {}%", &t!("volume"), volume);
