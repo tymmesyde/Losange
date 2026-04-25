@@ -44,7 +44,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum AppMsg {
-    Toast(String),
+    Toast((String, u32)),
     OpenHome,
     OpenSearch(Option<String>),
     OpenDiscover(Option<ResourceRequest>),
@@ -342,8 +342,12 @@ impl AsyncComponent for App {
         _root: &Self::Root,
     ) {
         match message {
-            AppMsg::Toast(message) => {
-                let toast = adw::Toast::builder().title(message).timeout(3000).build();
+            AppMsg::Toast((message, timeout)) => {
+                let toast = adw::Toast::builder()
+                    .title(message)
+                    .timeout(timeout)
+                    .build();
+                self.toaster.overlay_widget().dismiss_all();
                 self.toaster.add_toast(toast);
             }
             AppMsg::OpenHome => {

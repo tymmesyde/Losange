@@ -23,7 +23,10 @@ use tracks_menu::{TracksMenu, TracksMenuInput, TracksMenuOutput};
 use video::{Video, VideoInput, VideoOutput, VIDEO_STATE};
 
 use crate::{
-    app::AppMsg, common::window::WindowExt, components::spinner::Spinner, constants::{APP_ID, VOLUME_DEFAULT, VOLUME_MAX, VOLUME_STEP},
+    app::AppMsg,
+    common::window::WindowExt,
+    components::spinner::Spinner,
+    constants::{APP_ID, VOLUME_DEFAULT, VOLUME_MAX, VOLUME_STEP},
     APP_BROKER,
 };
 
@@ -587,6 +590,12 @@ impl SimpleComponent for Player {
             }
             PlayerInput::Volume(amount) => {
                 let volume = self.volume.value() + amount;
+
+                if amount != 0.0 {
+                    let message = format!("{} {}%", &t!("volume"), volume);
+                    APP_BROKER.send(AppMsg::Toast((message, 1)));
+                }
+
                 self.video.emit(VideoInput::Volume(volume));
             }
             PlayerInput::TextTrackChanged(id) => {
@@ -623,7 +632,7 @@ impl SimpleComponent for Player {
                     if window.is_fullscreen() {
                         window.set_fullscreened(false);
                     } else {
-                        APP_BROKER.send(AppMsg::NavigateBack) ;
+                        APP_BROKER.send(AppMsg::NavigateBack);
                     }
                 }
             }
@@ -694,7 +703,7 @@ impl SimpleComponent for Player {
             }
             PlayerInput::Error => {
                 let message = t!("error_player").to_string();
-                APP_BROKER.send(AppMsg::Toast(message));
+                APP_BROKER.send(AppMsg::Toast((message, 3)));
             }
         }
     }

@@ -35,6 +35,7 @@ subtitles_size: Subtitles size
 subtitles_position: Subtitles position
 subtitles_color: Subtitles color
 subtitles_outline_color: Subtitles outline color
+volume: Volume
 
 server: Server
 url: Url

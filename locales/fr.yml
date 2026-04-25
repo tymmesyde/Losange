@@ -34,6 +34,7 @@ subtitles_size: Taille des sous-titres
 subtitles_position: Position des sous-titres
 subtitles_color: Couleur des sous-titres
 subtitles_outline_color: Couleur de la bordure des sous-titres
+volume: Volume
 
 server: Serveur
 url: Url
