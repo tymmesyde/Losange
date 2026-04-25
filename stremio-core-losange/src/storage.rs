@@ -16,32 +16,31 @@ impl Storage {
     pub fn new(location: &Path) -> Result<Self, EnvError> {
         fs::create_dir_all(location).map_err(|e| {
             EnvError::StorageWriteError(format!(
-                "create storage directory at {}: {e}",
+                "Failed to create directory at {}: {e}",
                 location.display()
             ))
         })?;
+
         let path = location.join("stremio.redb");
         let db = Database::create(&path).map_err(|e| {
             EnvError::StorageWriteError(format!(
-                "create storage database at {}: {e}",
+                "Failed to create or open database at {}: {e}",
                 path.display()
             ))
         })?;
 
         let write_txn = db.begin_write().map_err(|e| {
-            EnvError::StorageWriteError(format!("begin storage initialization transaction: {e}"))
+            EnvError::StorageWriteError(format!("Failed to initialize write transaction: {e}"))
         })?;
 
         {
             write_txn.open_table(TABLE).map_err(|e| {
-                EnvError::StorageWriteError(format!(
-                    "open storage table during initialization: {e}"
-                ))
+                EnvError::StorageWriteError(format!("Failed to open database table: {e}"))
             })?;
         }
 
         write_txn.commit().map_err(|e| {
-            EnvError::StorageWriteError(format!("commit storage initialization transaction: {e}"))
+            EnvError::StorageWriteError(format!("Failed to commit write transaction: {e}"))
         })?;
 
         Ok(Self { db: Arc::new(db) })
