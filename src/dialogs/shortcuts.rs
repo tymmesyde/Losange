@@ -43,6 +43,14 @@ impl SimpleComponent for ShortcutsDialog {
             &t!("shortcut_seek_forward"),
             "Right",
         ));
+        player_section.add(adw::ShortcutsItem::new(
+            &t!("shortcut_increase_volume"),
+            "Up",
+        ));
+        player_section.add(adw::ShortcutsItem::new(
+            &t!("shortcut_decrease_volume"),
+            "Down",
+        ));
 
         widgets.add(general_section);
         widgets.add(player_section);

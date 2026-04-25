@@ -23,7 +23,7 @@ use tracks_menu::{TracksMenu, TracksMenuInput, TracksMenuOutput};
 use video::{Video, VideoInput, VideoOutput, VIDEO_STATE};
 
 use crate::{
-    app::AppMsg, common::window::WindowExt, components::spinner::Spinner, constants::APP_ID,
+    app::AppMsg, common::window::WindowExt, components::spinner::Spinner, constants::{APP_ID, VOLUME_DEFAULT, VOLUME_MAX, VOLUME_STEP},
     APP_BROKER,
 };
 
@@ -31,11 +31,15 @@ relm4::new_action_group!(pub(super) PlayerActionGroup, "player");
 relm4::new_stateless_action!(pub(super) PlayPauseAction, PlayerActionGroup, "play_pause");
 relm4::new_stateless_action!(pub(super) SeekPrevAction, PlayerActionGroup, "seek_prev");
 relm4::new_stateless_action!(pub(super) SeekNextAction, PlayerActionGroup, "seek_next");
+relm4::new_stateless_action!(pub(super) VolumeUp, PlayerActionGroup, "volume_up");
+relm4::new_stateless_action!(pub(super) VolumeDown, PlayerActionGroup, "volume_down");
 
 const SHORTCUTS: &[(&str, &str, &str)] = &[
     ("space", PlayerActionGroup::NAME, PlayPauseAction::NAME),
     ("Left", PlayerActionGroup::NAME, SeekPrevAction::NAME),
     ("Right", PlayerActionGroup::NAME, SeekNextAction::NAME),
+    ("Up", PlayerActionGroup::NAME, VolumeUp::NAME),
+    ("Down", PlayerActionGroup::NAME, VolumeDown::NAME),
 ];
 
 #[derive(Debug)]
@@ -52,7 +56,7 @@ pub enum PlayerInput {
     Seek,
     SeekPrev,
     SeekNext,
-    Volume,
+    Volume(f64),
     TextTrackChanged(i64),
     AudioTrackChanged(i64),
     Fullscreen,
@@ -231,11 +235,11 @@ impl SimpleComponent for Player {
                                 ],
 
                                 set_adjustment: &gtk::Adjustment::new(
-                                    50.0,
+                                    VOLUME_DEFAULT,
                                     0.0,
-                                    150.0,
-                                    10.0,
-                                    10.0,
+                                    VOLUME_MAX,
+                                    VOLUME_STEP,
+                                    VOLUME_STEP,
                                     0.0,
                                 ),
 
@@ -244,7 +248,7 @@ impl SimpleComponent for Player {
                                 set_value: state.volume,
 
                                 connect_value_changed[sender] => move |_, _| {
-                                    sender.input(PlayerInput::Volume);
+                                    sender.input(PlayerInput::Volume(0.0));
                                 } @volume_handler,
                             },
 
@@ -386,10 +390,26 @@ impl SimpleComponent for Player {
             })
         };
 
+        let volume_up_action = {
+            let sender = sender.input_sender().clone();
+            RelmAction::<VolumeUp>::new_stateless(move |_| {
+                sender.emit(PlayerInput::Volume(VOLUME_STEP));
+            })
+        };
+
+        let volume_down_action = {
+            let sender = sender.input_sender().clone();
+            RelmAction::<VolumeDown>::new_stateless(move |_| {
+                sender.emit(PlayerInput::Volume(-VOLUME_STEP));
+            })
+        };
+
         let mut actions = RelmActionGroup::<PlayerActionGroup>::new();
         actions.add_action(play_pause_action);
         actions.add_action(seek_prev_action);
         actions.add_action(seek_next_action);
+        actions.add_action(volume_up_action);
+        actions.add_action(volume_down_action);
 
         if let Some(window) = relm4::main_application().active_window() {
             actions.register_for_widget(window);
@@ -544,8 +564,8 @@ impl SimpleComponent for Player {
                 self.video.emit(VideoInput::Seek(time));
                 models::player::update_seek_time(time, state.duration);
             }
-            PlayerInput::Volume => {
-                let volume = self.volume.value();
+            PlayerInput::Volume(amount) => {
+                let volume = self.volume.value() + amount;
                 self.video.emit(VideoInput::Volume(volume));
             }
             PlayerInput::TextTrackChanged(id) => {

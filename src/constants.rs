@@ -15,3 +15,6 @@ pub const SUBTITLES_MIN_SIZE: u8 = 25;
 pub const SUBTITLES_MAX_SIZE: u8 = 175;
 pub const SUBTITLES_MIN_OFFSET: u8 = 0;
 pub const SUBTITLES_MAX_OFFSET: u8 = 100;
+pub const VOLUME_DEFAULT: f64 = 50.0;
+pub const VOLUME_MAX: f64 = 150.0;
+pub const VOLUME_STEP: f64 = 10.0;
