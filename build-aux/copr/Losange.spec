@@ -1,5 +1,5 @@
 Name:           Losange
-Version:        0.9.0
+Version:        0.10.0
 Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
@@ -40,6 +40,17 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
+* Mon Apr 27 2026 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.10.0-1
+- Add progress to videos on details
+- Add player subtitles color settings
+- Add player volume shortcuts
+- Add player fullscreen shortcut
+- Resize player window to video aspect ratio
+- Update player appearence
+- Automatically select last watched season on details
+- Improve grids performance on discover and library
+- Improve list performance on details 
+
 * Mon Mar 23 2026 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.9.0-1
 - Remember previously selected tracks on player
 - Add torrent progress on player

@@ -39,6 +39,19 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.10.0" date="2026-04-27">
+            <description>
+                <p>Add progress to videos on details</p>
+                <p>Add player subtitles color settings</p>
+                <p>Add player volume shortcuts</p>
+                <p>Add player fullscreen shortcut</p>
+                <p>Resize player window to video aspect ratio</p>
+                <p>Update player appearence</p>
+                <p>Automatically select last watched season on details</p>
+                <p>Improve grids performance on discover and library</p>
+                <p>Improve list performance on details </p>
+            </description>
+        </release>
         <release version="0.9.0" date="2026-03-23">
             <description>
                 <p>Remember previously selected tracks on player</p>
