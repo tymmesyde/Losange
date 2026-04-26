@@ -89,7 +89,7 @@ pub struct Player {
     text_tracks_menu: Controller<TracksMenu>,
     audio_tracks_menu: Controller<TracksMenu>,
     statistics_task: Option<JoinHandle<()>>,
-    default_window_size: Option<(f64, f64)>,
+    default_window_size: Option<(i32, i32)>,
 }
 
 #[relm4::component(pub)]
@@ -478,8 +478,7 @@ impl SimpleComponent for Player {
                 if self.settings.boolean("player-resize-window") {
                     if let Some((width, height)) = self.default_window_size.take() {
                         if let Some(window) = relm4::main_application().active_window() {
-                            window.animate_width(width);
-                            window.animate_height(height);
+                            window.animate_size(width, height);
                         }
                     }
                 }
@@ -667,32 +666,13 @@ impl SimpleComponent for Player {
                 }
             }
             PlayerInput::SizeChanged((video_width, video_height)) => {
-                if self.settings.boolean("player-resize-window") {
+                if self.settings.boolean("player-resize-window")
+                    && video_width > 0
+                    && video_height > 0
+                {
                     if let Some(window) = relm4::main_application().active_window() {
-                        if video_width > 0 && video_height > 0 {
-                            // Force layout to update
-                            if window.is_maximized() {
-                                window.unmaximize();
-                                window.maximize();
-                            } else {
-                                window.maximize();
-                                window.unmaximize();
-                            }
-
-                            let (window_width, window_height) = window.dimensions();
-                            self.default_window_size = Some((window_width, window_height));
-
-                            let video_ratio = video_width as f64 / video_height as f64;
-                            let window_ratio = window_width / window_height;
-
-                            if window_ratio < video_ratio {
-                                let new_height = (window_width / video_ratio).round();
-                                window.animate_height(new_height);
-                            } else {
-                                let new_width = (window_height * video_ratio).round();
-                                window.animate_width(new_width);
-                            }
-                        }
+                        self.default_window_size = Some(window.default_size());
+                        window.resize_to_aspect_ratio(video_width as f64 / video_height as f64);
                     }
                 }
             }
