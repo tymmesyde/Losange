@@ -670,6 +670,15 @@ impl SimpleComponent for Player {
                 if self.settings.boolean("player-resize-window") {
                     if let Some(window) = relm4::main_application().active_window() {
                         if video_width > 0 && video_height > 0 {
+                            // Force layout to update
+                            if window.is_maximized() {
+                                window.unmaximize();
+                                window.maximize();
+                            } else {
+                                window.maximize();
+                                window.unmaximize();
+                            }
+
                             let (window_width, window_height) = window.dimensions();
                             self.default_window_size = Some((window_width, window_height));
 
