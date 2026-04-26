@@ -270,10 +270,11 @@ impl Video {
         };
 
         let mpv = Mpv::with_initializer(|init| {
-            init.set_property("vo", "libmpv")?;
-            init.set_property("video-timing-offset", "0")?;
-            init.set_property("terminal", "yes")?;
-            init.set_property("msg-level", msg_level)?;
+            init.set_option("vo", "libmpv")?;
+            init.set_option("video-sync", "audio")?;
+            init.set_option("video-timing-offset", "0")?;
+            init.set_option("terminal", "yes")?;
+            init.set_option("msg-level", msg_level)?;
             Ok(())
         })
         .expect("Failed to create mpv");
