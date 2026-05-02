@@ -271,6 +271,7 @@ impl Video {
 
         let mpv = Mpv::with_initializer(|init| {
             init.set_option("vo", "libmpv")?;
+            init.set_option("hwdec", "auto")?;
             init.set_option("video-sync", "audio")?;
             init.set_option("video-timing-offset", "0")?;
             init.set_option("terminal", "yes")?;
