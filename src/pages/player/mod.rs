@@ -1,3 +1,4 @@
+mod mpv;
 mod tracks_menu;
 mod video;
 
