@@ -5,7 +5,12 @@ use libmpv2::{
     Format, Mpv, SetData,
 };
 use relm4::gtk::{
-    self, TickCallbackId, gdk::GLContext, glib::{self, ControlFlow, Propagation, Properties, SourceId, Variant, clone, subclass::*}, prelude::*, subclass::prelude::*
+    self,
+    gdk::GLContext,
+    glib::{self, clone, subclass::*, ControlFlow, Propagation, Properties, SourceId, Variant},
+    prelude::*,
+    subclass::prelude::*,
+    TickCallbackId,
 };
 use std::{
     cell::{Cell, RefCell},
