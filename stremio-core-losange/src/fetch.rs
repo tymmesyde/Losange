@@ -29,7 +29,7 @@ impl Fetch {
                 .unwrap_or_default(),
         )
         .with(Cache(HttpCache {
-            mode: CacheMode::Reload,
+            mode: CacheMode::Default,
             manager: CACacheManager { path },
             options: HttpCacheOptions::default(),
         }))
