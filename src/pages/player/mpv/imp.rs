@@ -10,13 +10,12 @@ use relm4::gtk::{
     glib::{self, clone, subclass::*, ControlFlow, Propagation, Properties, SourceId, Variant},
     prelude::*,
     subclass::prelude::*,
-    TickCallbackId,
 };
 use std::{
     cell::{Cell, RefCell},
     env,
     os::raw::c_void,
-    sync::OnceLock,
+    sync::{mpsc::channel, OnceLock},
 };
 use tracing::error;
 
@@ -31,8 +30,8 @@ pub struct MpvPlayer {
     scale_factor: Cell<i32>,
     mpv: RefCell<Mpv>,
     render_context: RefCell<Option<RenderContext>>,
+    render_source: RefCell<Option<SourceId>>,
     events_source: RefCell<Option<SourceId>>,
-    tick_callback: RefCell<Option<TickCallbackId>>,
     fbo: Cell<u32>,
     width: Cell<i32>,
     height: Cell<i32>,
@@ -68,8 +67,8 @@ impl Default for MpvPlayer {
             scale_factor: Cell::new(1),
             mpv: RefCell::new(mpv),
             render_context: Default::default(),
+            render_source: Default::default(),
             events_source: Default::default(),
-            tick_callback: Default::default(),
             fbo: Default::default(),
             width: Default::default(),
             height: Default::default(),
@@ -158,6 +157,21 @@ impl WidgetImpl for MpvPlayer {
         }
 
         if let Some(context) = object.context() {
+            let (sender, receiver) = channel();
+
+            let render_source = glib::idle_add_local(clone!(
+                #[weak]
+                object,
+                #[upgrade_or]
+                ControlFlow::Continue,
+                move || {
+                    receiver.try_iter().for_each(|_| object.queue_render());
+                    ControlFlow::Continue
+                }
+            ));
+
+            *self.render_source.borrow_mut() = Some(render_source);
+
             let mut mpv = self.mpv.borrow_mut();
             let handle = unsafe { mpv.ctx.as_mut() };
 
@@ -170,23 +184,14 @@ impl WidgetImpl for MpvPlayer {
                 RenderParam::BlockForTargetTime(false),
             ];
 
-            let render_context =
+            let mut render_context =
                 RenderContext::new(handle, params).expect("Failed to create render context");
 
+            render_context.set_update_callback(move || {
+                sender.send(()).ok();
+            });
+
             *self.render_context.borrow_mut() = Some(render_context);
-
-            let tick_callback = object.add_tick_callback(clone!(
-                #[weak]
-                object,
-                #[upgrade_or]
-                ControlFlow::Continue,
-                move |_, _| {
-                    object.queue_render();
-                    ControlFlow::Continue
-                }
-            ));
-
-            *self.tick_callback.borrow_mut() = Some(tick_callback);
 
             let events_source = glib::idle_add_local(clone!(
                 #[weak(rename_to = mpv_player)]
@@ -235,8 +240,8 @@ impl WidgetImpl for MpvPlayer {
             events_source.remove();
         }
 
-        if let Some(tick_callback) = self.tick_callback.borrow_mut().take() {
-            tick_callback.remove();
+        if let Some(render_source) = self.render_source.borrow_mut().take() {
+            render_source.remove();
         }
 
         if let Some(render_context) = self.render_context.borrow_mut().take() {
