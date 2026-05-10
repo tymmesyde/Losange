@@ -33,8 +33,7 @@ pub struct MpvPlayer {
     render_source: RefCell<Option<SourceId>>,
     events_source: RefCell<Option<SourceId>>,
     fbo: Cell<u32>,
-    width: Cell<i32>,
-    height: Cell<i32>,
+    size: Cell<(i32, i32)>,
 }
 
 impl Default for MpvPlayer {
@@ -70,8 +69,7 @@ impl Default for MpvPlayer {
             render_source: Default::default(),
             events_source: Default::default(),
             fbo: Default::default(),
-            width: Default::default(),
-            height: Default::default(),
+            size: Default::default(),
         }
     }
 }
@@ -256,8 +254,7 @@ impl GLAreaImpl for MpvPlayer {
     fn render(&self, _context: &GLContext) -> Propagation {
         let fbo = self.fbo();
         let scale_factor = self.scale_factor.get();
-        let width = self.width.get();
-        let height = self.height.get();
+        let (width, height) = self.size.get();
 
         if let Some(ref render_context) = *self.render_context.borrow() {
             render_context
@@ -269,7 +266,6 @@ impl GLAreaImpl for MpvPlayer {
     }
 
     fn resize(&self, width: i32, height: i32) {
-        self.width.set(width);
-        self.height.set(height);
+        self.size.set((width, height));
     }
 }
