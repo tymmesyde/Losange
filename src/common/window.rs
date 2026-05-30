@@ -32,7 +32,7 @@ impl WindowExt for Window {
 
     fn resize_to_aspect_ratio(&self, aspect_ratio: f64) {
         // Force layout to update
-        if !self.is_maximized() {
+        if !self.is_maximized() && !self.is_fullscreen() {
             self.maximize();
             self.unmaximize();
         }
