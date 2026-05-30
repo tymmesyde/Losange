@@ -39,6 +39,12 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.10.1" date="2026-05-30">
+            <description>
+                <p>Fix video performance / rendering issue under Nvidia</p>
+                <p>Fix window resizing when fullscreened</p>
+            </description>
+        </release>
         <release version="0.10.0" date="2026-04-27">
             <description>
                 <p>Add progress to videos on details</p>

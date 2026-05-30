@@ -1,5 +1,5 @@
 Name:           Losange
-Version:        0.10.0
+Version:        0.10.1
 Release:        1%{?dist}
 Summary:        A simple Stremio client for GNOME
 
@@ -43,6 +43,10 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 /usr/share/glib-2.0/schemas/xyz.timtimtim.Losange.gschema.xml
 
 %changelog
+* Sat May 30 2026 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.10.1-1
+- Fix video performance / rendering issue under Nvidia
+- Fix window resizing when fullscreened
+
 * Mon Apr 27 2026 Tim Dusser-Jolly <tymmesyde@gmail.com> - 0.10.0-1
 - Add progress to videos on details
 - Add player subtitles color settings
