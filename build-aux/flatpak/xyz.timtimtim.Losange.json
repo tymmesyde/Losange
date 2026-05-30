@@ -44,7 +44,7 @@
             ],
             "post-install": [
                 "install -Dm755 target/release/losange -t /app/libexec/",
-                "install -Dm755 data/losange.sh /app/bin/losange",
+                "install -Dm755 build-aux/flatpak/losange.sh /app/bin/losange",
                 "install -Dm644 data/icons/xyz.timtimtim.Losange.svg -t /app/share/icons/hicolor/scalable/apps/",
                 "install -Dm644 build-aux/flatpak/xyz.timtimtim.Losange.desktop -t /app/share/applications/",
                 "install -Dm644 data/xyz.timtimtim.Losange.metainfo.xml -t /app/share/metainfo/",

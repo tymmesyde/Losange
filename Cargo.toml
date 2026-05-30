@@ -53,7 +53,8 @@ relm4-icons-build = "0.10"
 
 [package.metadata.generate-rpm]
 assets = [
-    { source = "target/release/losange", dest = "/usr/bin/", mode = "755" },
+    { source = "target/release/losange", dest = "/usr/libexec/", mode = "755" },
+    { source = "data/losange.sh", dest = "/usr/bin/losange", mode = "755" },
     { source = "data/icons/xyz.timtimtim.Losange.svg", dest = "/usr/share/icons/hicolor/scalable/apps/", mode = "644" },
     { source = "data/xyz.timtimtim.Losange.desktop", dest = "/usr/share/applications/", mode = "644" },
     { source = "data/xyz.timtimtim.Losange.metainfo.xml", dest = "/usr/share/metainfo/", mode = "644" },
@@ -65,7 +66,8 @@ nodejs = ">= 10"
 
 [package.metadata.deb]
 assets = [
-    ["target/release/losange", "/usr/bin/losange", "755"],
+    ["target/release/losange", "/usr/bin/libexec/", "755"],
+    ["data/losange.sh", "/usr/bin/losange", "755"],
     ["data/icons/xyz.timtimtim.Losange.svg", "/usr/share/icons/hicolor/scalable/apps/", "644"],
     ["data/xyz.timtimtim.Losange.desktop", "/usr/share/applications/", "644"],
     ["data/xyz.timtimtim.Losange.metainfo.xml", "/usr/share/metainfo/", "644"],

@@ -21,10 +21,10 @@ export CARGO_HOME=$(pwd)/.cargo
 cargo build --release
 
 %install
-mkdir -p %{buildroot}/usr/bin
-install -m 755 target/release/losange %{buildroot}/usr/bin/
 mkdir -p %{buildroot}/usr/libexec
-install -m 755 data/losange.sh %{buildroot}/usr/libexec/losange
+install -m 755 target/release/losange %{buildroot}/usr/libexec/
+mkdir -p %{buildroot}/usr/bin
+install -m 755 data/losange.sh %{buildroot}/usr/bin/losange
 mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps
 install -Dm644 data/icons/xyz.timtimtim.Losange.svg %{buildroot}/usr/share/icons/hicolor/scalable/apps/
 mkdir -p %{buildroot}/usr/share/applications
