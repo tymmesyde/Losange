@@ -23,6 +23,8 @@ cargo build --release
 %install
 mkdir -p %{buildroot}/usr/bin
 install -m 755 target/release/losange %{buildroot}/usr/bin/
+mkdir -p %{buildroot}/usr/libexec
+install -m 755 data/losange.sh %{buildroot}/usr/libexec/losange
 mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps
 install -Dm644 data/icons/xyz.timtimtim.Losange.svg %{buildroot}/usr/share/icons/hicolor/scalable/apps/
 mkdir -p %{buildroot}/usr/share/applications
@@ -34,6 +36,7 @@ install -Dm644 data/xyz.timtimtim.Losange.gschema.xml %{buildroot}/usr/share/gli
 
 %files
 /usr/bin/losange
+/usr/libexec/losange
 /usr/share/icons/hicolor/scalable/apps/xyz.timtimtim.Losange.svg
 /usr/share/applications/xyz.timtimtim.Losange.desktop
 /usr/share/metainfo/xyz.timtimtim.Losange.metainfo.xml
