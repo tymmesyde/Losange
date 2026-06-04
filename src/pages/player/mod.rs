@@ -91,6 +91,7 @@ pub struct Player {
     audio_tracks_menu: Controller<TracksMenu>,
     statistics_task: Option<JoinHandle<()>>,
     default_window_size: Option<(i32, i32)>,
+    inhibit_cookie: Option<u32>,
 }
 
 #[relm4::component(pub)]
@@ -376,6 +377,7 @@ impl SimpleComponent for Player {
             audio_tracks_menu,
             statistics_task: None,
             default_window_size: None,
+            inhibit_cookie: None,
         };
 
         let play_pause_action = {
@@ -475,6 +477,7 @@ impl SimpleComponent for Player {
             PlayerInput::Unload => {
                 models::player::unload();
                 self.video.emit(VideoInput::Unload);
+                self.uninhibit_idle();
 
                 if self.settings.boolean("player-resize-window") {
                     if let Some((width, height)) = self.default_window_size.take() {
@@ -639,6 +642,12 @@ impl SimpleComponent for Player {
             PlayerInput::PauseChanged(paused) => {
                 models::player::update_paused(paused);
                 APP_BROKER.sender().emit(AppMsg::MediaStatus(paused));
+
+                if paused {
+                    self.uninhibit_idle();
+                } else {
+                    self.inhibit_idle();
+                }
             }
             PlayerInput::TimeChanged(time, duration) => {
                 models::player::update_time(time, duration);
@@ -701,10 +710,33 @@ impl SimpleComponent for Player {
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
         self.cancel_immersed_timeout();
         self.cancel_statistics_task();
+        self.uninhibit_idle();
     }
 }
 
 impl Player {
+    fn inhibit_idle(&mut self) {
+        if self.inhibit_cookie.is_some() {
+            return;
+        }
+
+        let app = relm4::main_application();
+        let window = app.active_window();
+        let cookie = app.inhibit(
+            window.as_ref(),
+            gtk::ApplicationInhibitFlags::IDLE,
+            Some("Playing video"),
+        );
+
+        self.inhibit_cookie = Some(cookie);
+    }
+
+    fn uninhibit_idle(&mut self) {
+        if let Some(cookie) = self.inhibit_cookie.take() {
+            relm4::main_application().uninhibit(cookie);
+        }
+    }
+
     fn create_immersed_timeout(&mut self, sender: ComponentSender<Self>) {
         let task = tokio::spawn(async move {
             sleep(Duration::from_secs(1)).await;

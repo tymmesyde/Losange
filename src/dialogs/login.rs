@@ -12,6 +12,7 @@ use crate::components::spinner::Spinner;
 #[derive(Debug)]
 pub enum LoginDialogInput {
     Open,
+    Closed,
     Update,
     Login,
     Error,
@@ -22,6 +23,7 @@ pub struct LoginDialog {
     password: adw::PasswordEntryRow,
     loading: bool,
     error: bool,
+    open: bool,
 }
 
 #[relm4::component(pub)]
@@ -35,6 +37,8 @@ impl Component for LoginDialog {
         adw::Dialog {
             set_content_width: 325,
             set_title: &t!("login"),
+
+            connect_closed => LoginDialogInput::Closed,
 
             #[wrap(Some)]
             set_child = &adw::ToolbarView {
@@ -111,6 +115,7 @@ impl Component for LoginDialog {
             password,
             loading: false,
             error: false,
+            open: false,
         };
 
         let email = &model.email;
@@ -125,11 +130,15 @@ impl Component for LoginDialog {
             LoginDialogInput::Open => {
                 let window = relm4::main_application().active_window();
                 root.present(window.as_ref());
+                self.open = true;
+            }
+            LoginDialogInput::Closed => {
+                self.open = false;
             }
             LoginDialogInput::Update => {
                 let ctx = CTX_STATE.read_inner();
 
-                if ctx.auth.is_some() {
+                if self.open && ctx.auth.is_some() {
                     self.loading = false;
                     self.error = false;
                     self.password.set_text("");
