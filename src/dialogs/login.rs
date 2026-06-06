@@ -127,14 +127,16 @@ impl Component for LoginDialog {
                 root.present(window.as_ref());
             }
             LoginDialogInput::Update => {
-                let ctx = CTX_STATE.read_inner();
+                if root.is_mapped() {
+                    let ctx = CTX_STATE.read_inner();
 
-                if ctx.auth.is_some() {
-                    self.loading = false;
-                    self.error = false;
-                    self.password.set_text("");
+                    if ctx.auth.is_some() {
+                        self.loading = false;
+                        self.error = false;
+                        self.password.set_text("");
 
-                    root.close();
+                        root.close();
+                    }
                 }
             }
             LoginDialogInput::Login => {
