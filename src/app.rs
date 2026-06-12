@@ -1,7 +1,15 @@
 use std::{path::Path, process::Child};
 
 use adw::prelude::*;
-use ashpd::{desktop::open_uri::OpenFileRequest, Uri, WindowIdentifier};
+use ashpd::{
+    desktop::{
+        inhibit::{InhibitFlags, InhibitOptions, InhibitProxy},
+        open_uri::OpenFileRequest,
+        Request,
+    },
+    enumflags2::BitFlags,
+    Uri, WindowIdentifier,
+};
 use gtk::{gio, glib};
 use relm4::{
     abstractions::Toaster,
@@ -80,6 +88,7 @@ pub struct App {
     shortcuts_dialog: Controller<ShortcutsDialog>,
     server_process: Option<Child>,
     mpris: MPris,
+    inhibit_request: Option<Request<()>>,
 }
 
 relm4::new_action_group!(pub(super) WindowActionGroup, "win");
@@ -266,6 +275,7 @@ impl AsyncComponent for App {
             shortcuts_dialog,
             server_process,
             mpris,
+            inhibit_request: None,
         };
 
         let navigation_view = &model.navigation_view;
@@ -390,8 +400,14 @@ impl AsyncComponent for App {
             AppMsg::NavigateBack => {
                 self.navigation_view.pop();
             }
-            AppMsg::MediaStatus(status) => {
-                self.mpris.set_playback_status(status).await;
+            AppMsg::MediaStatus(paused) => {
+                self.mpris.set_playback_status(paused).await;
+
+                if paused {
+                    self.enable_idling().await;
+                } else {
+                    self.disable_idling(root).await;
+                }
             }
             AppMsg::MediaMetadata((title, image)) => {
                 self.mpris.set_metadata(title, image).await;
@@ -465,6 +481,34 @@ impl App {
                     .map_err(|e| error!("Failed to open uri: {e}"))
                     .ok();
             }
+        }
+    }
+
+    async fn disable_idling(&mut self, window: &adw::ApplicationWindow) {
+        if let Some(identifier) = WindowIdentifier::from_native(window).await {
+            if let Ok(proxy) = InhibitProxy::new().await {
+                let mut flags = BitFlags::empty();
+                flags.insert(InhibitFlags::Idle);
+
+                let options = InhibitOptions::default()
+                    .set_reason("Prevent screen from going blank during media playback");
+
+                self.inhibit_request = proxy
+                    .inhibit(Some(&identifier), flags, options)
+                    .await
+                    .map_err(|e| error!("Failed to prevent idling: {e}"))
+                    .ok();
+            }
+        }
+    }
+
+    async fn enable_idling(&self) {
+        if let Some(request) = &self.inhibit_request {
+            request
+                .close()
+                .await
+                .map_err(|e| error!("Failed to allow idling: {e}"))
+                .ok();
         }
     }
 }

@@ -15,7 +15,7 @@ members = [
 
 [dependencies]
 anyhow = "1.0.102"
-ashpd = { version = "0.13.11", features = ["gtk4", "open_uri"] }
+ashpd = { version = "0.13.11", features = ["gtk4", "open_uri", "inhibit"] }
 bytes = "1.11.1"
 chrono = "0.4.44"
 clap = { version = "4.5.60", features = ["derive"] }
