@@ -15,6 +15,7 @@ members = [
 
 [dependencies]
 anyhow = "1.0.102"
+ashpd = { version = "0.13.11", features = ["gtk4", "open_uri"] }
 bytes = "1.11.1"
 chrono = "0.4.44"
 clap = { version = "4.5.60", features = ["derive"] }
@@ -30,7 +31,6 @@ libc = "0.2.183"
 libloading = "0.9.0"
 libmpv2 = "5.0.3"
 mpris-server = "0.9.0"
-open = "5.3.3"
 ordered-float = "5.3.0"
 relm4 = { version = "0.11.0", features = ["libadwaita", "gnome_50"] }
 relm4-icons = "0.11.0"

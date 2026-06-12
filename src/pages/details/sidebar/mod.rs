@@ -285,7 +285,7 @@ impl SimpleComponent for Sidebar {
                                 external_url: Some(url),
                                 ..
                             } => {
-                                let _ = open::that(url.as_str());
+                                APP_BROKER.send(AppMsg::OpenExternal(url.to_string()));
                             }
                             StreamSource::Url { .. } | StreamSource::Torrent { .. } => {
                                 APP_BROKER.send(AppMsg::OpenStream(Box::new(stream.to_owned())));

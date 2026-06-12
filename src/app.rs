@@ -1,6 +1,7 @@
 use std::{path::Path, process::Child};
 
 use adw::prelude::*;
+use ashpd::{desktop::open_uri::OpenFileRequest, Uri, WindowIdentifier};
 use gtk::{gio, glib};
 use relm4::{
     abstractions::Toaster,
@@ -17,6 +18,7 @@ use shellexpand::tilde;
 use stremio_core_losange::{
     core, models, stremio_core::types::addon::ResourceRequest, types::stream::Stream,
 };
+use tracing::error;
 use url::Url;
 
 use crate::{
@@ -56,6 +58,7 @@ pub enum AppMsg {
     NavigateBack,
     MediaStatus(bool),
     MediaMetadata((String, Option<Url>)),
+    OpenExternal(String),
 }
 
 pub struct App {
@@ -95,6 +98,7 @@ impl AsyncComponent for App {
     type CommandOutput = ();
 
     view! {
+        #[root]
         main_window = adw::ApplicationWindow {
             add_css_class: if cfg!(debug_assertions) {
                 css::classes::DEVEL
@@ -339,7 +343,7 @@ impl AsyncComponent for App {
         &mut self,
         message: Self::Input,
         _sender: AsyncComponentSender<Self>,
-        _root: &Self::Root,
+        root: &Self::Root,
     ) {
         match message {
             AppMsg::Toast((message, timeout)) => {
@@ -391,6 +395,9 @@ impl AsyncComponent for App {
             }
             AppMsg::MediaMetadata((title, image)) => {
                 self.mpris.set_metadata(title, image).await;
+            }
+            AppMsg::OpenExternal(url) => {
+                Self::open_external(root, url).await;
             }
         }
     }
@@ -445,6 +452,20 @@ impl App {
     fn navigate_tab(&self, name: &str) {
         self.navigation_view.pop_to_tag("main");
         self.view_stack.set_visible_child_name(name);
+    }
+
+    async fn open_external(window: &adw::ApplicationWindow, url: String) {
+        if let Some(identifier) = WindowIdentifier::from_native(window).await {
+            if let Ok(uri) = Uri::parse(&url) {
+                let request = OpenFileRequest::default().identifier(identifier);
+
+                request
+                    .send_uri(&uri)
+                    .await
+                    .map_err(|e| error!("Failed to open uri: {e}"))
+                    .ok();
+            }
+        }
     }
 }
 

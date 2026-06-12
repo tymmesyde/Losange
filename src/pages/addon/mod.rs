@@ -8,9 +8,13 @@ use rust_i18n::t;
 use stremio_core_losange::models::{self, addon_details::ADDON_DETAILS_STATE};
 use url::Url;
 
-use crate::components::{
-    image::{init::ImageInit, Image, ImageInput},
-    spinner::Spinner,
+use crate::{
+    app::AppMsg,
+    components::{
+        image::{init::ImageInit, Image, ImageInput},
+        spinner::Spinner,
+    },
+    APP_BROKER,
 };
 
 #[derive(Debug)]
@@ -234,7 +238,7 @@ impl SimpleComponent for AddonPage {
                         .manifest_url
                         .as_str()
                         .replace("manifest.json", "configure");
-                    let _ = open::that(configure_url);
+                    APP_BROKER.send(AppMsg::OpenExternal(configure_url));
                 }
             }
         }
