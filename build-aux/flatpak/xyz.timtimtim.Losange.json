@@ -67,6 +67,7 @@
                         "-Dbuild-date=false",
                         "-Dcplayer=false",
                         "-Dlibmpv=true",
+                        "-Dvulkan=disabled",
                         "-Dmanpage-build=disabled"
                     ],
                     "cleanup": [
@@ -85,7 +86,8 @@
                             "name": "libplacebo",
                             "buildsystem": "meson",
                             "config-opts": [
-                                "-Ddemos=false"
+                                "-Ddemos=false",
+                                "-Dvulkan=disabled"
                             ],
                             "cleanup": [
                                 "/include",
