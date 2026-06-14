@@ -242,6 +242,7 @@ impl WidgetImpl for MpvPlayer {
             render_source.remove();
         }
 
+        self.obj().make_current();
         if let Some(render_context) = self.render_context.borrow_mut().take() {
             drop(render_context);
         }
