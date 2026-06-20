@@ -22,6 +22,16 @@ dnf copr enable tymmesyde/Losange
 dnf install Losange
 ```
 
+### Nix/NixOS
+
+Install using the `losange` package from [Nixpkgs](https://search.nixos.org/packages?query=losange).
+
+You can also try out Losange without installing:
+
+```bash
+nix run nixpkgs#losange
+```
+
 ## Development
 
 ```
