@@ -23,7 +23,8 @@
         "--device=dri",
         "--filesystem=xdg-data",
         "--filesystem=xdg-run/pipewire-0:ro",
-        "--own-name=org.mpris.MediaPlayer2.Losange"
+        "--own-name=org.mpris.MediaPlayer2.Losange",
+        "--env=ANV_DEBUG=video-decode,video-encode"
     ],
     "build-options": {
         "append-path": "/usr/lib/sdk/rust-stable/bin",

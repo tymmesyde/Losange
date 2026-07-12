@@ -1,3 +1,4 @@
+use gdk_wayland::{wayland_client::Proxy, WaylandDisplay};
 use libc::{setlocale, LC_NUMERIC};
 use libmpv2::{
     events::{Event, PropertyData},
@@ -173,7 +174,7 @@ impl WidgetImpl for MpvPlayer {
             let mut mpv = self.mpv.borrow_mut();
             let handle = unsafe { mpv.ctx.as_mut() };
 
-            let params = vec![
+            let mut params = vec![
                 RenderParam::ApiType(RenderParamApiType::OpenGl),
                 RenderParam::InitParams(OpenGLInitParams {
                     get_proc_address,
@@ -181,6 +182,15 @@ impl WidgetImpl for MpvPlayer {
                 }),
                 RenderParam::BlockForTargetTime(false),
             ];
+
+            let display = object.display();
+            if let Ok(display) = display.downcast::<WaylandDisplay>() {
+                if let Some(display) = display.wl_display() {
+                    params.push(RenderParam::WaylandDisplay(
+                        display.id().as_ptr() as *const c_void
+                    ));
+                }
+            }
 
             let mut render_context =
                 RenderContext::new(handle, params).expect("Failed to create render context");
