@@ -595,7 +595,7 @@ impl SimpleComponent for Player {
                     volume = (volume / VOLUME_STEP).round() * VOLUME_STEP;
                     volume = volume.clamp(0.0, VOLUME_MAX);
 
-                    let message = format!("{} {}%", &t!("volume"), volume);
+                    let message = format!("{} {}%", t!("volume"), volume);
                     APP_BROKER.send(AppMsg::Toast((message, 1)));
                 }
 
