@@ -39,6 +39,15 @@
     <launchable type="desktop-id">xyz.timtimtim.Losange.desktop</launchable>
 
     <releases>
+        <release version="0.10.2" date="2026-07-12">
+            <description>
+                <p>Fix rendering issue when exiting player under Nvidia</p>
+                <p>Fix low audio volume under Flatpak</p>
+                <p>Fix volume value when using keyboard shortcuts</p>
+                <p>Fix hardware acceleration under Intel</p>
+                <p>Prevent screen from going blank while playing</p>
+            </description>
+        </release>
         <release version="0.10.1" date="2026-05-30">
             <description>
                 <p>Fix video performance / rendering issue under Nvidia</p>
