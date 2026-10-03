@@ -1,6 +1,6 @@
 use gtk::gdk;
 use itertools::Itertools;
-use relm4::gtk::{self, glib::object::ObjectExt};
+use relm4::gtk::{self, glib::object::ObjectExt, InterfaceColorScheme};
 
 pub fn create_css_provider() -> gtk::CssProvider {
     let css_provider = gtk::CssProvider::new();
@@ -24,11 +24,10 @@ pub fn colors_to_css(colors: Vec<String>) -> String {
 }
 
 pub fn has_dark_theme() -> bool {
-    let settings = gtk::Settings::default();
-    match settings {
-        Some(settings) => settings.property::<bool>("gtk-application-prefer-dark-theme"),
-        None => false,
-    }
+    gtk::Settings::default().is_some_and(|settings| {
+        settings.property::<InterfaceColorScheme>("gtk-interface-color-scheme")
+            == InterfaceColorScheme::Dark
+    })
 }
 
 pub trait ColorHexExt {
