@@ -28,7 +28,7 @@ image = "0.25.10"
 itertools = "0.14.0"
 libc = "0.2.183"
 libloading = "0.9.0"
-libmpv2 = "5.0.3"
+libmpv2 = { git = "https://github.com/tymmesyde/libmpv2-rs" }
 mpris-server = "0.9.0"
 ordered-float = "5.3.0"
 relm4 = { version = "0.11.0", features = ["libadwaita", "gnome_50"] }
