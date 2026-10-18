@@ -308,7 +308,7 @@ impl Sidebar {
             let items = videos
                 .iter()
                 .map(|video| ListItem {
-                    number: video.episode.map_or(0, |episode| episode),
+                    number: video.episode.unwrap_or(0),
                     title: video.name.clone(),
                     description: video.description.clone(),
                     progress: last_watched.as_ref().and_then(|last_watched| {

@@ -34,14 +34,11 @@ pub fn update(library: &LibraryWithFilters<NotRemovedFilter>) {
 pub fn load(request: Option<LibraryRequest>) {
     dispatch(
         Action::Load(ActionLoad::LibraryWithFilters(Selected {
-            request: request.map_or(
-                LibraryRequest {
-                    r#type: Default::default(),
-                    sort: Default::default(),
-                    page: Default::default(),
-                },
-                |request| request,
-            ),
+            request: request.unwrap_or(LibraryRequest {
+                r#type: Default::default(),
+                sort: Default::default(),
+                page: Default::default(),
+            }),
         })),
         None,
     );
