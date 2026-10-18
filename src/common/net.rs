@@ -32,7 +32,7 @@ pub async fn fetch(url: Url) -> anyhow::Result<Response> {
         )
         .with(Cache(HttpCache {
             mode: CacheMode::Default,
-            manager: CACacheManager { path },
+            manager: CACacheManager::new(path, false),
             options: HttpCacheOptions::default(),
         }))
         .build()

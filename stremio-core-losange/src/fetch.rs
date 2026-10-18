@@ -30,7 +30,7 @@ impl Fetch {
         )
         .with(Cache(HttpCache {
             mode: CacheMode::Default,
-            manager: CACacheManager { path },
+            manager: CACacheManager::new(path, false),
             options: HttpCacheOptions::default(),
         }))
         .build();
