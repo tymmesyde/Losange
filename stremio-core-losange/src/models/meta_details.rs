@@ -65,7 +65,7 @@ pub fn update(meta_details: &MetaDetails, ctx: &Ctx) {
             item.videos.iter().map(Video::from).collect_vec()
         })
         .iter()
-        .chunk_by(|video| video.season.map_or(0, |season| season))
+        .chunk_by(|video| video.season.unwrap_or(0))
         .into_iter()
         .map(|(season, group)| (season, group.map(|video| video.to_owned()).collect()))
         .collect();
