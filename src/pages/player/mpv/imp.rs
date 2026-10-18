@@ -1,4 +1,4 @@
-use gdk_wayland::{wayland_client::Proxy, WaylandDisplay};
+use gdk_wayland::{glib::JoinHandle, wayland_client::Proxy, WaylandDisplay};
 use libc::{setlocale, LC_NUMERIC};
 use libmpv2::{
     events::{Event, PropertyData},
@@ -8,7 +8,7 @@ use libmpv2::{
 use relm4::gtk::{
     self,
     gdk::GLContext,
-    glib::{self, clone, subclass::*, ControlFlow, Propagation, Properties, SourceId, Variant},
+    glib::{self, clone, subclass::*, Propagation, Properties, Variant},
     prelude::*,
     subclass::prelude::*,
 };
@@ -16,12 +16,18 @@ use std::{
     cell::{Cell, RefCell},
     env,
     os::raw::c_void,
-    sync::{mpsc::channel, OnceLock},
+    sync::OnceLock,
 };
+use tokio::sync::mpsc::unbounded_channel;
 use tracing::error;
 
 fn get_proc_address(_context: &GLContext, name: &str) -> *mut c_void {
     epoxy::get_proc_addr(name) as _
+}
+
+enum MpvCallback {
+    Render,
+    Events,
 }
 
 #[derive(Properties)]
@@ -31,8 +37,7 @@ pub struct MpvPlayer {
     scale_factor: Cell<i32>,
     mpv: RefCell<Mpv>,
     render_context: RefCell<Option<RenderContext>>,
-    render_source: RefCell<Option<SourceId>>,
-    events_source: RefCell<Option<SourceId>>,
+    handle: RefCell<Option<JoinHandle<()>>>,
     fbo: Cell<u32>,
     size: Cell<(i32, i32)>,
 }
@@ -67,8 +72,7 @@ impl Default for MpvPlayer {
             scale_factor: Cell::new(1),
             mpv: RefCell::new(mpv),
             render_context: Default::default(),
-            render_source: Default::default(),
-            events_source: Default::default(),
+            handle: Default::default(),
             fbo: Default::default(),
             size: Default::default(),
         }
@@ -94,12 +98,12 @@ impl MpvPlayer {
     }
 
     fn on_event<T: Fn(Event)>(&self, callback: T) {
-        if let Some(result) = self.mpv.borrow_mut().wait_event(0.0) {
+        while let Some(result) = self.mpv.borrow().wait_event(0.0) {
             match result {
                 Ok(event) => callback(event),
                 Err(e) => error!("Failed to wait for event: {e}"),
             }
-        };
+        }
     }
 
     pub fn send_command(&self, name: &str, args: &[&str]) {
@@ -156,20 +160,7 @@ impl WidgetImpl for MpvPlayer {
         }
 
         if let Some(context) = object.context() {
-            let (sender, receiver) = channel();
-
-            let render_source = glib::idle_add_local(clone!(
-                #[weak]
-                object,
-                #[upgrade_or]
-                ControlFlow::Continue,
-                move || {
-                    receiver.try_iter().for_each(|_| object.queue_render());
-                    ControlFlow::Continue
-                }
-            ));
-
-            *self.render_source.borrow_mut() = Some(render_source);
+            let (sender, mut receiver) = unbounded_channel::<MpvCallback>();
 
             let mut mpv = self.mpv.borrow_mut();
             let handle = unsafe { mpv.ctx.as_mut() };
@@ -195,61 +186,72 @@ impl WidgetImpl for MpvPlayer {
             let mut render_context =
                 RenderContext::new(handle, params).expect("Failed to create render context");
 
+            let update_sender = sender.clone();
             render_context.set_update_callback(move || {
-                sender.send(()).ok();
+                update_sender.send(MpvCallback::Render).ok();
             });
 
             *self.render_context.borrow_mut() = Some(render_context);
 
-            let events_source = glib::idle_add_local(clone!(
+            let context = glib::MainContext::default();
+            let handle = context.spawn_local(clone!(
                 #[weak(rename_to = mpv_player)]
                 self,
                 #[weak]
                 object,
-                #[upgrade_or]
-                ControlFlow::Continue,
-                move || {
-                    mpv_player.on_event(|event| match event {
-                        Event::PropertyChange { name, change, .. } => {
-                            let value = match change {
-                                PropertyData::Str(v) => Some(v.to_variant()),
-                                PropertyData::Flag(v) => Some(v.to_variant()),
-                                PropertyData::Int64(v) => Some(v.to_variant()),
-                                PropertyData::Double(v) => Some(v.to_variant()),
-                                _ => None,
-                            };
+                async move {
+                    while let Some(event) = receiver.recv().await {
+                        match event {
+                            MpvCallback::Render => {
+                                object.queue_render();
+                            }
+                            MpvCallback::Events => {
+                                mpv_player.on_event(|event| match event {
+                                    Event::PropertyChange { name, change, .. } => {
+                                        let value = match change {
+                                            PropertyData::Str(v) => Some(v.to_variant()),
+                                            PropertyData::Flag(v) => Some(v.to_variant()),
+                                            PropertyData::Int64(v) => Some(v.to_variant()),
+                                            PropertyData::Double(v) => Some(v.to_variant()),
+                                            _ => None,
+                                        };
 
-                            if let Some(value) = value {
-                                object.emit_by_name::<()>("property-changed", &[&name, &value]);
+                                        if let Some(value) = value {
+                                            object.emit_by_name::<()>(
+                                                "property-changed",
+                                                &[&name, &value],
+                                            );
+                                        }
+                                    }
+                                    Event::EndFile(reason) => {
+                                        if reason == 0 {
+                                            object.emit_by_name::<()>("playback-ended", &[]);
+                                        }
+
+                                        if reason == 4 {
+                                            object.emit_by_name::<()>("playback-error", &[]);
+                                        }
+                                    }
+                                    _ => {}
+                                });
                             }
                         }
-                        Event::EndFile(reason) => {
-                            if reason == 0 {
-                                object.emit_by_name::<()>("playback-ended", &[]);
-                            }
-
-                            if reason == 4 {
-                                object.emit_by_name::<()>("playback-error", &[]);
-                            }
-                        }
-                        _ => {}
-                    });
-
-                    ControlFlow::Continue
+                    }
                 }
             ));
 
-            self.events_source.borrow_mut().replace(events_source);
+            let wakeup_sender = sender.clone();
+            mpv.set_wakeup_callback(move || {
+                wakeup_sender.send(MpvCallback::Events).ok();
+            });
+
+            self.handle.borrow_mut().replace(handle);
         }
     }
 
     fn unmap(&self) {
-        if let Some(events_source) = self.events_source.borrow_mut().take() {
-            events_source.remove();
-        }
-
-        if let Some(render_source) = self.render_source.borrow_mut().take() {
-            render_source.remove();
+        if let Some(handle) = self.handle.borrow_mut().take() {
+            handle.abort();
         }
 
         self.obj().make_current();
