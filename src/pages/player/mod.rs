@@ -2,7 +2,7 @@ mod mpv;
 mod tracks_menu;
 mod video;
 
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use adw::prelude::*;
 use gtk::glib;
@@ -14,18 +14,21 @@ use relm4::{
     RelmWidgetExt, SimpleComponent,
 };
 use rust_i18n::t;
+use shellexpand::tilde;
 use stremio_core_losange::{
     models::{self, ctx::CTX_STATE, player::PLAYER_STATE, server::SERVER_STATE},
     stremio_core::types::streams::{AudioTrack, SubtitleTrack},
     types::stream::Stream,
 };
 use tokio::time::sleep;
+use tracing::error;
 use tracks_menu::{TracksMenu, TracksMenuInput, TracksMenuOutput};
+use url::Url;
 use video::{Video, VideoInput, VideoOutput, VIDEO_STATE};
 
 use crate::{
     app::AppMsg,
-    common::window::WindowExt,
+    common::{net, window::WindowExt},
     components::spinner::Spinner,
     constants::{APP_ID, VOLUME_DEFAULT, VOLUME_MAX, VOLUME_STEP},
     APP_BROKER,
@@ -73,6 +76,8 @@ pub enum PlayerInput {
     TimeChanged(f64, f64),
     TracksChanged,
     SizeChanged((i64, i64)),
+    Download,
+    DownloadFinished,
     Ended,
     Error,
 }
@@ -90,6 +95,8 @@ pub struct Player {
     text_tracks_menu: Controller<TracksMenu>,
     audio_tracks_menu: Controller<TracksMenu>,
     statistics_task: Option<JoinHandle<()>>,
+    download_task: Option<JoinHandle<()>>,
+    downloading: bool,
     default_window_size: Option<(i32, i32)>,
 }
 
@@ -302,6 +309,26 @@ impl SimpleComponent for Player {
                             model.text_tracks_menu.widget(),
                             model.audio_tracks_menu.widget(),
 
+                            gtk::Stack {
+                                set_size_request: (45, 45),
+
+                                #[watch]
+                                set_visible: player.uri.is_some(),
+
+                                #[watch]
+                                set_visible_child_name: if model.downloading { "spinner" } else { "button" },
+
+                                add_named[Some("button")] = &gtk::Button {
+                                    set_icon_name: "document-save",
+                                    connect_clicked => PlayerInput::Download,
+                                },
+
+                                add_named[Some("spinner")] = &adw::Spinner {
+                                    set_align: gtk::Align::Center,
+                                    set_size_request: (18, 18),
+                                },
+                            },
+
                             gtk::Button {
                                 set_icon_name: "settings",
                                 set_size_request: (45, 45),
@@ -375,6 +402,8 @@ impl SimpleComponent for Player {
             text_tracks_menu,
             audio_tracks_menu,
             statistics_task: None,
+            download_task: None,
+            downloading: false,
             default_window_size: None,
         };
 
@@ -680,6 +709,16 @@ impl SimpleComponent for Player {
                     }
                 }
             }
+            PlayerInput::Download => {
+                let player = PLAYER_STATE.read_inner();
+
+                if let Some(url) = player.uri.clone() {
+                    self.download_file(player.title.clone(), url, sender);
+                }
+            }
+            PlayerInput::DownloadFinished => {
+                self.downloading = false;
+            }
             PlayerInput::Ended => {
                 let ctx = CTX_STATE.read_inner();
                 let player = PLAYER_STATE.read_inner();
@@ -704,6 +743,7 @@ impl SimpleComponent for Player {
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
         self.cancel_immersed_timeout();
         self.cancel_statistics_task();
+        self.cancel_download_task();
     }
 }
 
@@ -747,5 +787,41 @@ impl Player {
         let seconds = total_seconds % 60;
 
         format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+    }
+
+    fn cancel_download_task(&mut self) {
+        if let Some(task) = self.download_task.take() {
+            task.abort();
+        }
+    }
+
+    fn download_file(&mut self, name: String, url: Url, sender: ComponentSender<Self>) {
+        self.cancel_download_task();
+        self.downloading = true;
+
+        let settings = gio::Settings::new(APP_ID);
+        let downloads_location = settings.string("downloads-location");
+
+        let out_dir = tilde(&downloads_location).to_string();
+        let file_path = PathBuf::from(out_dir).join(sanitize_filename::sanitize(name));
+
+        let task = tokio::spawn(async move {
+            match net::download(file_path, url).await {
+                Ok(_) => {
+                    let message = t!("player_download_success").to_string();
+                    APP_BROKER.send(AppMsg::Toast((message, 3)));
+                }
+                Err(e) => {
+                    error!("Failed to download video: {e}");
+
+                    let message = t!("player_download_error").to_string();
+                    APP_BROKER.send(AppMsg::Toast((message, 3)));
+                }
+            }
+
+            sender.input_sender().emit(PlayerInput::DownloadFinished);
+        });
+
+        self.download_task.replace(task);
     }
 }

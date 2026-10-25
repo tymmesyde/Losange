@@ -30,6 +30,7 @@ pub enum PreferencesDialogInput {
     PlayerSubtitlesColor(String),
     PlayerSubtitlesOultineColor(String),
     PlayerAutoPlayChanged(bool),
+    PlayerDownloadsLocationChanged(String),
     ServerUrlChanged(String),
     ServerEnabledChanged(bool),
 }
@@ -209,6 +210,19 @@ impl Component for PreferencesDialog {
                             sender.input(PreferencesDialogInput::PlayerAutoPlayChanged(value));
                         }
                     },
+                },
+
+                add = &adw::PreferencesGroup {
+                    set_title: &t!("downloads"),
+
+                    adw::EntryRow {
+                        set_title: &t!("downloads_location"),
+                        set_text: &model.settings.string("downloads-location"),
+                        connect_changed[sender] => move |row| {
+                            let value = row.text().to_string();
+                            sender.input(PreferencesDialogInput::PlayerDownloadsLocationChanged(value));
+                        }
+                    },
                 }
             },
 
@@ -342,6 +356,9 @@ impl Component for PreferencesDialog {
                     settings.binge_watching = value;
                     settings
                 });
+            }
+            PreferencesDialogInput::PlayerDownloadsLocationChanged(value) => {
+                let _ = self.settings.set_string("downloads-location", &value);
             }
             PreferencesDialogInput::ServerUrlChanged(value) => {
                 if let Ok(url) = Url::parse(&value) {

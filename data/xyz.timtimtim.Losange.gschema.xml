@@ -29,6 +29,10 @@
             <default>true</default>
             <summary>Resize player window to video dimensions</summary>
         </key>
+        <key name="downloads-location" type="s">
+            <default>"~/Downloads/Losange"</default>
+            <summary>Location of the downloaded files</summary>
+        </key>
         <key name="storage-location" type="s">
             <default>"~/.local/share/losange"</default>
             <summary>Location of the storage</summary>

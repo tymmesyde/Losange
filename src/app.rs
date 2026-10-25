@@ -220,6 +220,7 @@ impl AsyncComponent for App {
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
+        Self::initialize().await;
         Self::initialize_core().await;
         let server_process = Self::initialize_server().await;
 
@@ -430,6 +431,16 @@ impl AsyncComponent for App {
 }
 
 impl App {
+    async fn initialize() {
+        let settings = gio::Settings::new(APP_ID);
+        let download_location = settings.string("downloads-location");
+        let expanded_download_location = tilde(&download_location).to_string();
+
+        if let Err(e) = tokio::fs::create_dir_all(expanded_download_location).await {
+            error!("Failed to create downloads directory: {e}");
+        }
+    }
+
     async fn initialize_core() {
         let settings = gio::Settings::new(APP_ID);
         let storage_location = settings.string("storage-location");
