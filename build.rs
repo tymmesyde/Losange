@@ -18,6 +18,7 @@ fn main() {
             "language",
             "sound-wave",
             "settings",
+            "document-save",
         ],
     );
 }

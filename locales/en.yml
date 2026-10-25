@@ -8,6 +8,8 @@ preferences: Preferences
 subtitles: Subtitles
 playback: Playback
 auto_play: Auto play next video
+downloads: Downloads
+downloads_location: Location
 
 shortcut_search: Open Search
 shortcut_preferences: Edit Preferences
@@ -136,4 +138,8 @@ western: Western
 
 original: Original
 disabled: Disabled
+
 error_player: Unable to play video
+
+player_download_error: Unable to download video
+player_download_success: Video downloaded successfully

@@ -1,5 +1,9 @@
-use std::{path::Path, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
+use futures_util::StreamExt;
 use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache, HttpCacheOptions};
 use relm4::{
     gtk::{gio, prelude::SettingsExt},
@@ -8,6 +12,7 @@ use relm4::{
 use reqwest::{Client, Response};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use shellexpand::tilde;
+use tokio::{fs, io::AsyncWriteExt};
 use url::Url;
 
 use crate::constants::APP_ID;
@@ -45,4 +50,22 @@ pub async fn fetch(url: Url) -> anyhow::Result<Response> {
         .await?;
 
     Ok(response)
+}
+
+pub async fn download(file_path: PathBuf, url: Url) -> anyhow::Result<()> {
+    let tmp_file_path = file_path.with_added_extension("part");
+
+    let response = reqwest::get(url.as_str()).await?.error_for_status()?;
+    let mut stream = response.bytes_stream();
+
+    let mut file = fs::File::create(&tmp_file_path).await?;
+    while let Some(chunk) = stream.next().await {
+        file.write_all(&chunk?).await?;
+    }
+
+    file.flush().await?;
+    drop(file);
+
+    fs::rename(&tmp_file_path, &file_path).await?;
+    Ok(())
 }

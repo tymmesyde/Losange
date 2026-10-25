@@ -34,7 +34,7 @@ ordered-float = "5.3.0"
 relm4 = { version = "0.11.0", features = ["libadwaita", "gnome_50"] }
 relm4-icons = "0.11.0"
 gdk-wayland = { package = "gdk4-wayland", version = "0.11.4", features = ["v4_20", "wayland_crate"] }
-reqwest = { version = "0.12.28", features = ["rustls-tls", "http2", "json"] }
+reqwest = { version = "0.12.28", features = ["rustls-tls", "http2", "json", "stream"] }
 reqwest-middleware = "0.4.2"
 http-cache-reqwest = "0.16.0"
 rust-i18n = "3.1.5"
@@ -48,6 +48,8 @@ tracing = "0.1.44"
 tracing-subscriber = "0.3.22"
 url = "2.5.8"
 xml = "1.2.1"
+futures-util = "0.3.34"
+sanitize-filename = "0.6.0"
 
 [build-dependencies]
 relm4-icons-build = "0.10"
