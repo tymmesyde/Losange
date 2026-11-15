@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use itertools::Itertools;
 use relm4::{gtk, ComponentParts, ComponentSender, SharedState, SimpleComponent};
 use serde::{Deserialize, Serialize};
@@ -47,6 +49,7 @@ pub enum VideoInput {
     Pause,
     Seek(f64),
     Volume(f64),
+    AddSubtitles(Vec<(String, String, String)>),
     TextTrack(i64),
     AudioTrack(i64),
     SubtitlesSize(f64),
@@ -67,6 +70,7 @@ pub enum VideoOutput {
 
 pub struct Video {
     mpv: MpvPlayer,
+    added_subtitles: HashSet<String>,
 }
 
 #[relm4::component(pub)]
@@ -159,7 +163,10 @@ impl SimpleComponent for Video {
         mpv.observe_property("height");
         mpv.observe_property("track-list");
 
-        let model = Video { mpv };
+        let model = Video {
+            mpv,
+            added_subtitles: HashSet::new(),
+        };
 
         let mpv = &model.mpv;
         let widgets = view_output!();
@@ -175,6 +182,8 @@ impl SimpleComponent for Video {
                 state.buffering = true;
                 drop(state);
 
+                self.added_subtitles.clear();
+
                 let start = &format!("start=+{}", start_time / SECOND);
                 self.mpv
                     .send_command("loadfile", &[&uri, "replace", "-1", start]);
@@ -184,7 +193,9 @@ impl SimpleComponent for Video {
                 state.loaded = false;
                 state.height = 0;
                 state.width = 0;
+                drop(state);
 
+                self.added_subtitles.clear();
                 self.mpv.send_command("stop", &[]);
             }
             VideoInput::Play => {
@@ -198,6 +209,21 @@ impl SimpleComponent for Video {
             }
             VideoInput::Volume(volume) => {
                 self.mpv.set_property("volume", volume);
+            }
+            VideoInput::AddSubtitles(subtitles) => {
+                // `sub-add` only works once a file is loaded and its tracks are known
+                if VIDEO_STATE.read_inner().audio_tracks.is_empty()
+                    && VIDEO_STATE.read_inner().text_tracks.len() <= 1
+                {
+                    return;
+                }
+
+                for (url, lang, title) in subtitles {
+                    if self.added_subtitles.insert(url.to_owned()) {
+                        self.mpv
+                            .send_command("sub-add", &[&url, "auto", &title, &lang]);
+                    }
+                }
             }
             VideoInput::TextTrack(id) => {
                 if id == -1 {

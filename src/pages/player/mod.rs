@@ -534,6 +534,8 @@ impl SimpleComponent for Player {
                     }
                 }
 
+                self.add_external_subtitles();
+
                 let size = ctx.settings.subtitles_size as f64 / 100.0;
                 self.video.emit(VideoInput::SubtitlesSize(size));
 
@@ -679,6 +681,8 @@ impl SimpleComponent for Player {
                 let player = PLAYER_STATE.read_inner();
                 let video = VIDEO_STATE.read_inner();
 
+                self.add_external_subtitles();
+
                 self.text_tracks_menu
                     .emit(TracksMenuInput::Update(video.text_tracks.to_owned()));
                 self.audio_tracks_menu
@@ -787,6 +791,28 @@ impl Player {
         let seconds = total_seconds % 60;
 
         format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+    }
+
+    fn add_external_subtitles(&self) {
+        let player = PLAYER_STATE.read_inner();
+
+        if player.subtitles.is_empty() {
+            return;
+        }
+
+        let subtitles = player
+            .subtitles
+            .iter()
+            .map(|subtitle| {
+                (
+                    subtitle.url.to_string(),
+                    subtitle.lang.to_owned(),
+                    subtitle.title.to_owned(),
+                )
+            })
+            .collect();
+
+        self.video.emit(VideoInput::AddSubtitles(subtitles));
     }
 
     fn cancel_download_task(&mut self) {
