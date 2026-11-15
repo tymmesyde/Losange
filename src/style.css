@@ -24,6 +24,12 @@ dropdown.flat > button:active {
     background-color: color-mix(in srgb, currentColor 16%, transparent);
 }
 
+/* Let the translucent popover show through the tracks menu */
+list.tracks-list,
+list.tracks-list > row {
+    background-color: transparent;
+}
+
 gridview {
     background: transparent;
 }

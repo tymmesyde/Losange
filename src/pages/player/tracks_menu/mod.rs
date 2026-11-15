@@ -191,7 +191,7 @@ impl SimpleComponent for TracksMenu {
 impl TracksMenu {
     fn create_list() -> gtk::ListBox {
         gtk::ListBox::builder()
-            .css_classes([css::classes::OSD])
+            .css_classes([css::classes::OSD, "tracks-list"])
             .width_request(200)
             .selection_mode(gtk::SelectionMode::None)
             .build()
