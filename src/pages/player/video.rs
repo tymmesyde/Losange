@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use itertools::Itertools;
 use relm4::{gtk, ComponentParts, ComponentSender, SharedState, SimpleComponent};
 use serde::{Deserialize, Serialize};
@@ -15,14 +13,39 @@ struct Track {
     title: Option<String>,
     lang: Option<String>,
     selected: bool,
+    #[serde(rename = "external-filename")]
+    external_filename: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct MediaTrack {
     pub id: i64,
+    /// Language code used to group tracks
     pub lang: String,
+    /// Display name of the language
+    pub language: String,
+    pub title: Option<String>,
     pub label: String,
     pub active: bool,
+    /// Source of an external subtitle file
+    pub url: Option<String>,
+}
+
+impl MediaTrack {
+    /// A track that is only listed and not yet loaded into mpv
+    pub fn pending(id: i64, lang: &str, title: &str, url: &str) -> Self {
+        let (code, language) = Video::language_info(Some(lang));
+
+        Self {
+            id,
+            lang: code,
+            label: format!("{language} - {title}"),
+            language,
+            title: Some(title.to_owned()),
+            active: false,
+            url: Some(url.to_owned()),
+        }
+    }
 }
 
 #[derive(Default, Debug)]
@@ -49,7 +72,7 @@ pub enum VideoInput {
     Pause,
     Seek(f64),
     Volume(f64),
-    AddSubtitles(Vec<(String, String, String)>),
+    AddSubtitle((String, String, String)),
     TextTrack(i64),
     AudioTrack(i64),
     SubtitlesSize(f64),
@@ -70,7 +93,6 @@ pub enum VideoOutput {
 
 pub struct Video {
     mpv: MpvPlayer,
-    added_subtitles: HashSet<String>,
 }
 
 #[relm4::component(pub)]
@@ -163,10 +185,7 @@ impl SimpleComponent for Video {
         mpv.observe_property("height");
         mpv.observe_property("track-list");
 
-        let model = Video {
-            mpv,
-            added_subtitles: HashSet::new(),
-        };
+        let model = Video { mpv };
 
         let mpv = &model.mpv;
         let widgets = view_output!();
@@ -182,7 +201,6 @@ impl SimpleComponent for Video {
                 state.buffering = true;
                 drop(state);
 
-                self.added_subtitles.clear();
 
                 let start = &format!("start=+{}", start_time / SECOND);
                 self.mpv
@@ -195,7 +213,6 @@ impl SimpleComponent for Video {
                 state.width = 0;
                 drop(state);
 
-                self.added_subtitles.clear();
                 self.mpv.send_command("stop", &[]);
             }
             VideoInput::Play => {
@@ -210,20 +227,11 @@ impl SimpleComponent for Video {
             VideoInput::Volume(volume) => {
                 self.mpv.set_property("volume", volume);
             }
-            VideoInput::AddSubtitles(subtitles) => {
-                // `sub-add` only works once a file is loaded and its tracks are known
-                if VIDEO_STATE.read_inner().audio_tracks.is_empty()
-                    && VIDEO_STATE.read_inner().text_tracks.len() <= 1
-                {
-                    return;
-                }
-
-                for (url, lang, title) in subtitles {
-                    if self.added_subtitles.insert(url.to_owned()) {
-                        self.mpv
-                            .send_command("sub-add", &[&url, "auto", &title, &lang]);
-                    }
-                }
+            VideoInput::AddSubtitle((url, lang, title)) => {
+                // Loaded only when picked, since mpv downloads the file. `select` makes it
+                // the active track once loaded.
+                self.mpv
+                    .send_command("sub-add", &[&url, "select", &title, &lang]);
             }
             VideoInput::TextTrack(id) => {
                 if id == -1 {
@@ -252,34 +260,38 @@ impl SimpleComponent for Video {
 }
 
 impl Video {
+    fn language_info(lang: Option<&str>) -> (String, String) {
+        let language = lang.and_then(|lang| Language::try_from(lang).ok());
+
+        match language {
+            Some(language) => (language.code.to_owned(), language.name.to_owned()),
+            None => ("und".to_owned(), "Unknown".to_owned()),
+        }
+    }
+
     fn create_media_tracks(list: Vec<Track>) -> (Vec<MediaTrack>, Vec<MediaTrack>) {
         let media_tracks = |r#type: &str| {
             list.iter()
                 .filter(|track| track.r#type == r#type)
                 .map(|track| {
-                    let language = track
-                        .lang
-                        .as_ref()
-                        .and_then(|lang| Language::try_from(lang.clone()).ok());
+                    let (code, language) = Self::language_info(track.lang.as_deref());
+                    let known = code != "und";
 
-                    let locale = language.as_ref().map(|language| language.name);
-                    let code = language
-                        .as_ref()
-                        .map(|language| language.code)
-                        .unwrap_or("und");
-
-                    let label = match (locale, &track.title) {
-                        (Some(locale), Some(title)) => format!("{} - {}", locale, title),
-                        (Some(locale), None) => locale.to_owned(),
-                        (None, Some(title)) => title.to_owned(),
+                    let label = match (known, &track.title) {
+                        (true, Some(title)) => format!("{} - {}", language, title),
+                        (true, None) => language.to_owned(),
+                        (false, Some(title)) => title.to_owned(),
                         _ => "Unknown".to_owned(),
                     };
 
                     MediaTrack {
                         id: track.id,
-                        lang: code.to_string(),
+                        lang: code,
+                        language,
+                        title: track.title.to_owned(),
                         label,
                         active: track.selected,
+                        url: track.external_filename.to_owned(),
                     }
                 })
                 .sorted_by(|a, b| Ord::cmp(&a.lang, &b.lang))
@@ -294,8 +306,11 @@ impl Video {
             MediaTrack {
                 id: -1,
                 lang: "und".to_owned(),
+                language: String::new(),
+                title: None,
                 label: "disabled".to_owned(),
                 active: text_track_disabled,
+                url: None,
             },
         );
 
