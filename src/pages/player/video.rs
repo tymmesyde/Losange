@@ -229,9 +229,9 @@ impl SimpleComponent for Video {
             }
             VideoInput::AddSubtitle((url, lang, title)) => {
                 // Loaded only when picked, since mpv downloads the file. `select` makes it
-                // the active track once loaded.
+                // the active track once loaded. Async so the UI thread doesn't wait on the download.
                 self.mpv
-                    .send_command("sub-add", &[&url, "select", &title, &lang]);
+                    .send_command_async("sub-add", &[&url, "select", &title, &lang]);
             }
             VideoInput::TextTrack(id) => {
                 if id == -1 {
