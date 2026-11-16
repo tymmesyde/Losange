@@ -394,15 +394,14 @@ impl SimpleComponent for Player {
                 TracksMenuOutput::TrackChanged(index) => PlayerInput::TextTrackChanged(index),
             });
 
-        let audio_tracks_menu =
-            TracksMenu::builder()
-                .launch(TracksMenuInit {
-                    icon: "sound-wave",
-                    grouped: false,
-                })
-                .forward(sender.input_sender(), |msg| match msg {
-                    TracksMenuOutput::TrackChanged(index) => PlayerInput::AudioTrackChanged(index),
-                });
+        let audio_tracks_menu = TracksMenu::builder()
+            .launch(TracksMenuInit {
+                icon: "sound-wave",
+                grouped: false,
+            })
+            .forward(sender.input_sender(), |msg| match msg {
+                TracksMenuOutput::TrackChanged(index) => PlayerInput::AudioTrackChanged(index),
+            });
 
         let model = Player {
             settings,

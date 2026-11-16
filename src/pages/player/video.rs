@@ -201,7 +201,6 @@ impl SimpleComponent for Video {
                 state.buffering = true;
                 drop(state);
 
-
                 let start = &format!("start=+{}", start_time / SECOND);
                 self.mpv
                     .send_command("loadfile", &[&uri, "replace", "-1", start]);
