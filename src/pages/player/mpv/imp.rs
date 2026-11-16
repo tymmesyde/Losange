@@ -139,8 +139,7 @@ impl MpvPlayer {
 
         let mpv = self.mpv.borrow();
         // mpv copies the arguments before returning, so `cstr_args` can be dropped afterwards
-        let result =
-            unsafe { mpv_command_async(mpv.ctx.as_ptr().cast(), 0, ptrs.as_mut_ptr()) };
+        let result = unsafe { mpv_command_async(mpv.ctx.as_ptr().cast(), 0, ptrs.as_mut_ptr()) };
 
         if result < 0 {
             error!("Failed to send async command {name}: Raw({result})");

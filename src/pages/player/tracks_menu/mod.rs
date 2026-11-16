@@ -232,9 +232,10 @@ impl TracksMenu {
         // (display name, count, active) by language code, sorted by display name
         let mut languages: BTreeMap<&str, (&str, usize, bool)> = BTreeMap::new();
         for track in self.tracks.iter().filter(|t| Self::is_language_track(t)) {
-            let entry = languages
-                .entry(track.lang.as_str())
-                .or_insert((track.language.as_str(), 0, false));
+            let entry =
+                languages
+                    .entry(track.lang.as_str())
+                    .or_insert((track.language.as_str(), 0, false));
             entry.1 += 1;
             entry.2 |= track.active;
         }
@@ -296,7 +297,11 @@ impl TracksMenu {
                 return;
             };
 
-            if let Some(track) = self.tracks.iter().find(|t| Self::is_language_track(t) && &t.lang == lang) {
+            if let Some(track) = self
+                .tracks
+                .iter()
+                .find(|t| Self::is_language_track(t) && &t.lang == lang)
+            {
                 self.back_label.set_label(&track.language);
             }
 
