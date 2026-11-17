@@ -113,7 +113,12 @@ impl RelmListItem for ListItem {
         number.set_visible(self.number.gt(&0));
 
         title.set_label(&self.title);
+        title.set_tooltip_text(Some(self.title.as_str()).filter(|title| !title.is_empty()));
+
         description.set_label(&self.description.no_line_breaks());
+        description.set_tooltip_text(
+            Some(self.description.as_str()).filter(|description| !description.is_empty()),
+        );
         description.set_visible(!self.description.is_empty());
 
         icon.set_icon_name(Some(self.icon));
