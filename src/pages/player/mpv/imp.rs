@@ -15,11 +15,16 @@ use relm4::gtk::{
 use std::{
     cell::{Cell, RefCell},
     env,
-    os::raw::c_void,
+    ffi::CString,
+    os::raw::{c_char, c_int, c_void},
     sync::OnceLock,
 };
 use tokio::sync::mpsc::unbounded_channel;
 use tracing::error;
+
+extern "C" {
+    fn mpv_command_async(ctx: *mut c_void, reply_userdata: u64, args: *mut *const c_char) -> c_int;
+}
 
 fn get_proc_address(_context: &GLContext, name: &str) -> *mut c_void {
     epoxy::get_proc_addr(name) as _
@@ -109,6 +114,35 @@ impl MpvPlayer {
     pub fn send_command(&self, name: &str, args: &[&str]) {
         if let Err(e) = self.mpv.borrow().command(name, args) {
             error!("Failed to send command {name}: {e}");
+        }
+    }
+
+    /// Like `send_command`, but returns immediately instead of blocking the
+    /// caller until mpv finishes. Use for commands that may do I/O (e.g. fetching
+    /// a remote subtitle file), which would otherwise freeze the UI thread.
+    pub fn send_command_async(&self, name: &str, args: &[&str]) {
+        let cstr_args: Result<Vec<CString>, _> = std::iter::once(name)
+            .chain(args.iter().copied())
+            .map(CString::new)
+            .collect();
+
+        let cstr_args = match cstr_args {
+            Ok(args) => args,
+            Err(e) => {
+                error!("Failed to send async command {name}: {e}");
+                return;
+            }
+        };
+
+        let mut ptrs: Vec<*const c_char> = cstr_args.iter().map(|arg| arg.as_ptr()).collect();
+        ptrs.push(std::ptr::null());
+
+        let mpv = self.mpv.borrow();
+        // mpv copies the arguments before returning, so `cstr_args` can be dropped afterwards
+        let result = unsafe { mpv_command_async(mpv.ctx.as_ptr().cast(), 0, ptrs.as_mut_ptr()) };
+
+        if result < 0 {
+            error!("Failed to send async command {name}: Raw({result})");
         }
     }
 

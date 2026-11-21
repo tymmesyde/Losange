@@ -61,6 +61,10 @@ impl MpvPlayer {
         self.imp().send_command(name, args);
     }
 
+    pub fn send_command_async(&self, name: &str, args: &[&str]) {
+        self.imp().send_command_async(name, args);
+    }
+
     pub fn observe_property(&self, name: &str) {
         let widget = self.imp();
 

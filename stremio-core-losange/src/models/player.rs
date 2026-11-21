@@ -1,11 +1,16 @@
 use relm4::SharedState;
+use stremio_core::constants::SUBTITLES_RESOURCE_NAME;
 use stremio_core::{
     models::{
         ctx::Ctx,
-        player::{Player, Selected},
+        player::{Player, Selected, VideoParams},
     },
     runtime::msg::{Action, ActionLoad, ActionPlayer},
-    types::{resource::StreamSource, streams::StreamItemState},
+    types::{
+        addon::ResourcePath,
+        resource::{StreamSource, Subtitles},
+        streams::StreamItemState,
+    },
 };
 use url::Url;
 
@@ -15,8 +20,16 @@ use crate::{
     types::{item::Item, stream::Stream},
 };
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExternalSubtitle {
+    pub url: Url,
+    pub lang: String,
+    pub title: String,
+}
+
 #[derive(Default)]
 pub struct PlayerState {
+    pub subtitles: Vec<ExternalSubtitle>,
     pub uri: Option<Url>,
     pub title: String,
     pub image: Option<Url>,
@@ -104,6 +117,34 @@ pub fn update(player: &Player, ctx: &Ctx) {
 
     let stream_state = player.stream_state.to_owned();
 
+    let embedded_subtitles = player.selected.as_ref().into_iter().flat_map(|selected| {
+        selected
+            .stream
+            .subtitles
+            .iter()
+            .map(|subtitle| external_subtitle(subtitle, "Stream".to_owned()))
+    });
+
+    let addon_subtitles = player.subtitles.iter().flat_map(|loadable| {
+        let title = ctx
+            .profile
+            .addons
+            .iter()
+            .find(|addon| addon.transport_url == loadable.request.base)
+            .map(|addon| addon.manifest.name.to_owned())
+            .unwrap_or_else(|| "Addon".to_owned());
+
+        loadable
+            .content
+            .as_ref()
+            .and_then(|content| content.ready())
+            .into_iter()
+            .flatten()
+            .map(move |subtitle| external_subtitle(subtitle, title.to_owned()))
+    });
+
+    let subtitles = embedded_subtitles.chain(addon_subtitles).collect();
+
     let torrent_info = player
         .selected
         .as_ref()
@@ -116,6 +157,7 @@ pub fn update(player: &Player, ctx: &Ctx) {
             _ => None,
         });
 
+    state.subtitles = subtitles;
     state.uri = uri;
     state.title = title;
     state.image = image;
@@ -125,15 +167,42 @@ pub fn update(player: &Player, ctx: &Ctx) {
     state.torrent_info = torrent_info;
 }
 
+fn external_subtitle(subtitle: &Subtitles, title: String) -> ExternalSubtitle {
+    ExternalSubtitle {
+        url: subtitle.url.to_owned(),
+        lang: subtitle.lang.to_owned(),
+        title,
+    }
+}
+
 pub fn load(stream: Stream) {
+    let subtitles_path = ResourcePath::without_extra(
+        SUBTITLES_RESOURCE_NAME,
+        &stream.stream_request.path.r#type,
+        &stream.stream_request.path.id,
+    );
+    let filename = stream.behavior_hints.filename.to_owned();
+
     dispatch(
         Action::Load(ActionLoad::Player(Box::new(Selected {
             stream: stream.to_owned().into(),
             stream_request: Some(stream.stream_request),
             meta_request: Some(stream.meta_request),
-            subtitles_path: None,
+            subtitles_path: Some(subtitles_path),
         }))),
         None,
+    );
+
+    // Addon subtitles are only requested once the video params are known
+    dispatch(
+        Action::Player(ActionPlayer::VideoParamsChanged {
+            video_params: Some(VideoParams {
+                hash: None,
+                size: None,
+                filename,
+            }),
+        }),
+        Some(LosangeModelField::Player),
     );
 }
 

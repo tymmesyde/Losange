@@ -2,7 +2,7 @@ mod mpv;
 mod tracks_menu;
 mod video;
 
-use std::{path::PathBuf, time::Duration};
+use std::{collections::HashSet, path::PathBuf, time::Duration};
 
 use adw::prelude::*;
 use gtk::glib;
@@ -16,15 +16,20 @@ use relm4::{
 use rust_i18n::t;
 use shellexpand::tilde;
 use stremio_core_losange::{
-    models::{self, ctx::CTX_STATE, player::PLAYER_STATE, server::SERVER_STATE},
+    models::{
+        self,
+        ctx::CTX_STATE,
+        player::{PlayerState, PLAYER_STATE},
+        server::SERVER_STATE,
+    },
     stremio_core::types::streams::{AudioTrack, SubtitleTrack},
     types::stream::Stream,
 };
 use tokio::time::sleep;
 use tracing::error;
-use tracks_menu::{TracksMenu, TracksMenuInput, TracksMenuOutput};
+use tracks_menu::{TracksMenu, TracksMenuInit, TracksMenuInput, TracksMenuOutput};
 use url::Url;
-use video::{Video, VideoInput, VideoOutput, VIDEO_STATE};
+use video::{MediaTrack, Video, VideoInput, VideoOutput, VideoState, VIDEO_STATE};
 
 use crate::{
     app::AppMsg,
@@ -42,6 +47,9 @@ relm4::new_stateless_action!(pub(super) VolumeUp, PlayerActionGroup, "volume_up"
 relm4::new_stateless_action!(pub(super) VolumeDown, PlayerActionGroup, "volume_down");
 relm4::new_stateless_action!(pub(super) ToggleFullscreen, PlayerActionGroup, "toggle_fullscreen");
 relm4::new_stateless_action!(pub(super) Exit, PlayerActionGroup, "exit");
+
+/// Ids at or below this are addon subtitles that are not loaded into mpv yet (-1 is "off")
+const PENDING_TRACK_ID: i64 = -2;
 
 const SHORTCUTS: &[(&str, &str, &str)] = &[
     ("space", PlayerActionGroup::NAME, PlayPauseAction::NAME),
@@ -94,6 +102,8 @@ pub struct Player {
     volume: gtk::ScaleButton,
     text_tracks_menu: Controller<TracksMenu>,
     audio_tracks_menu: Controller<TracksMenu>,
+    text_tracks: Vec<MediaTrack>,
+    tracks_restored: bool,
     statistics_task: Option<JoinHandle<()>>,
     download_task: Option<JoinHandle<()>>,
     downloading: bool,
@@ -375,19 +385,23 @@ impl SimpleComponent for Player {
         let seekbar = gtk::Scale::default();
         let volume = gtk::ScaleButton::default();
 
-        let text_tracks_menu = TracksMenu::builder().launch("language").forward(
-            sender.input_sender(),
-            |msg| match msg {
+        let text_tracks_menu = TracksMenu::builder()
+            .launch(TracksMenuInit {
+                icon: "language",
+                grouped: true,
+            })
+            .forward(sender.input_sender(), |msg| match msg {
                 TracksMenuOutput::TrackChanged(index) => PlayerInput::TextTrackChanged(index),
-            },
-        );
+            });
 
-        let audio_tracks_menu =
-            TracksMenu::builder()
-                .launch("sound-wave")
-                .forward(sender.input_sender(), |msg| match msg {
-                    TracksMenuOutput::TrackChanged(index) => PlayerInput::AudioTrackChanged(index),
-                });
+        let audio_tracks_menu = TracksMenu::builder()
+            .launch(TracksMenuInit {
+                icon: "sound-wave",
+                grouped: false,
+            })
+            .forward(sender.input_sender(), |msg| match msg {
+                TracksMenuOutput::TrackChanged(index) => PlayerInput::AudioTrackChanged(index),
+            });
 
         let model = Player {
             settings,
@@ -401,6 +415,8 @@ impl SimpleComponent for Player {
             volume: volume.to_owned(),
             text_tracks_menu,
             audio_tracks_menu,
+            text_tracks: vec![],
+            tracks_restored: false,
             statistics_task: None,
             download_task: None,
             downloading: false,
@@ -504,6 +520,8 @@ impl SimpleComponent for Player {
             PlayerInput::Unload => {
                 models::player::unload();
                 self.video.emit(VideoInput::Unload);
+                self.text_tracks.clear();
+                self.tracks_restored = false;
 
                 if self.settings.boolean("player-resize-window") {
                     if let Some((width, height)) = self.default_window_size.take() {
@@ -533,6 +551,8 @@ impl SimpleComponent for Player {
                             .emit(VideoInput::Load((uri.to_string(), player.time)));
                     }
                 }
+
+                self.update_text_tracks(&player, &video);
 
                 let size = ctx.settings.subtitles_size as f64 / 100.0;
                 self.video.emit(VideoInput::SubtitlesSize(size));
@@ -630,6 +650,19 @@ impl SimpleComponent for Player {
 
                 self.video.emit(VideoInput::Volume(volume));
             }
+            PlayerInput::TextTrackChanged(id) if id <= PENDING_TRACK_ID => {
+                // Addon subtitle not loaded yet: fetch it now that it was picked
+                let player = PLAYER_STATE.read_inner();
+                let index = (PENDING_TRACK_ID - id) as usize;
+
+                if let Some(subtitle) = player.subtitles.get(index) {
+                    self.video.emit(VideoInput::AddSubtitle((
+                        subtitle.url.to_string(),
+                        subtitle.lang.to_owned(),
+                        subtitle.title.to_owned(),
+                    )));
+                }
+            }
             PlayerInput::TextTrackChanged(id) => {
                 self.video.emit(VideoInput::TextTrack(id));
 
@@ -679,21 +712,28 @@ impl SimpleComponent for Player {
                 let player = PLAYER_STATE.read_inner();
                 let video = VIDEO_STATE.read_inner();
 
-                self.text_tracks_menu
-                    .emit(TracksMenuInput::Update(video.text_tracks.to_owned()));
+                self.update_text_tracks(&player, &video);
                 self.audio_tracks_menu
                     .emit(TracksMenuInput::Update(video.audio_tracks.to_owned()));
 
-                if let Some(state) = &player.stream_state {
-                    if let Some(track) = &state.subtitle_track {
-                        if let Ok(id) = track.id.parse::<i64>() {
-                            self.video.emit(VideoInput::TextTrack(id));
-                        }
-                    }
+                // Restore the saved tracks once. Doing it on every change would override
+                // a subtitle the user picked afterwards.
+                let tracks_ready = !video.audio_tracks.is_empty() || video.text_tracks.len() > 1;
 
-                    if let Some(track) = &state.audio_track {
-                        if let Ok(id) = track.id.parse::<i64>() {
-                            self.video.emit(VideoInput::AudioTrack(id));
+                if tracks_ready && !self.tracks_restored {
+                    self.tracks_restored = true;
+
+                    if let Some(state) = &player.stream_state {
+                        if let Some(track) = &state.subtitle_track {
+                            if let Ok(id) = track.id.parse::<i64>() {
+                                self.video.emit(VideoInput::TextTrack(id));
+                            }
+                        }
+
+                        if let Some(track) = &state.audio_track {
+                            if let Ok(id) = track.id.parse::<i64>() {
+                                self.video.emit(VideoInput::AudioTrack(id));
+                            }
                         }
                     }
                 }
@@ -787,6 +827,42 @@ impl Player {
         let seconds = total_seconds % 60;
 
         format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+    }
+
+    /// mpv tracks plus the addon subtitles that are not loaded into mpv yet
+    fn update_text_tracks(&mut self, player: &PlayerState, video: &VideoState) {
+        let mut tracks = video.text_tracks.to_owned();
+
+        // Only list addon subtitles once the video is loaded, as mpv needs a file for `sub-add`
+        if video.text_tracks.len() > 1 || !video.audio_tracks.is_empty() {
+            let loaded: HashSet<&str> = video
+                .text_tracks
+                .iter()
+                .filter_map(|track| track.url.as_deref())
+                .collect();
+
+            let pending = player
+                .subtitles
+                .iter()
+                .enumerate()
+                .filter(|(_, subtitle)| !loaded.contains(subtitle.url.as_str()))
+                .map(|(index, subtitle)| {
+                    MediaTrack::pending(
+                        PENDING_TRACK_ID - index as i64,
+                        &subtitle.lang,
+                        &subtitle.title,
+                        subtitle.url.as_str(),
+                    )
+                })
+                .collect::<Vec<_>>();
+
+            tracks.extend(pending);
+        }
+
+        if tracks != self.text_tracks {
+            self.text_tracks = tracks.to_owned();
+            self.text_tracks_menu.emit(TracksMenuInput::Update(tracks));
+        }
     }
 
     fn cancel_download_task(&mut self) {
